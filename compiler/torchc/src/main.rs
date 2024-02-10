@@ -1,5 +1,7 @@
+use async_std::fs;
 use colored::Colorize;
 use std::panic;
+use torchc_lex::{lexer, Script, ToScript};
 use torchc_lits::lits;
 
 #[async_std::main]
@@ -31,4 +33,16 @@ async fn main() {
             ">()".bold()
         );
     }));
+
+    let content: String = fs::read_to_string("../onedrive/escritorio/main.torch")
+        .await
+        .unwrap();
+    let mut script: Script = content.to_script().await;
+
+    while let Some(token) = lexer(&mut script).await {
+        print!(
+            "[{:?}|{}:{}] ",
+            token.lexeme, token.pos.line, token.pos.grapheme
+        );
+    }
 }

@@ -1,0 +1,38 @@
+use super::{Script, Table, Token};
+
+/// Get the following token from the script.
+///
+/// ---
+/// _**Lexicographic Analyzer**_
+pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
+    let mut token: Token = Token::new().await;
+    let mut lit: String = String::new();
+
+    while let Some(c) = script.peek_char().await {
+        match c {
+            // Identifier or name
+            'a'..='z' | 'A'..='Z' | '_' => {
+                lit.push(script.next_char().await.unwrap());
+                token.pos = script.pos.clone();
+
+                while let Some(c) = script.peek_char().await {
+                    match c {
+                        'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
+                            lit.push(script.next_char().await.unwrap())
+                        }
+                        _ => break,
+                    }
+                }
+                token.lexeme = Table::Id(Some(lit.clone()));
+            }
+
+            // Illegal token
+            _ => {
+                token.lexeme = Table::Illegal(Some(script.next_char().await.unwrap().to_string()));
+                token.pos = script.pos.clone();
+            }
+        }
+        return Some(token);
+    }
+    None
+}
