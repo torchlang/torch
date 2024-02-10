@@ -18,6 +18,12 @@ impl Token {
             pos: Pos::default().await,
         }
     }
+
+    /// Obtain the token literal.
+    #[inline]
+    pub async fn lit(&self) -> Option<&str> {
+        self.lexeme.lit().await
+    }
 }
 
 /// Script position.
@@ -34,6 +40,8 @@ impl Pos {
             grapheme: 0,
         }
     }
+
+    /// It advances according to the unicode character and returns it.
     #[inline]
     pub async fn advance(&mut self, c: char) -> char {
         if c == '\n' {

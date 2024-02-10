@@ -10,6 +10,28 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
 
     while let Some(c) = script.peek_char().await {
         match c {
+            // Skip token(s)
+            '\r' => {
+                script.next_char().await.unwrap();
+                continue;
+            }
+
+            // Statement separator(s).
+            '\n' => {
+                script.next_char().await.unwrap();
+                token.pos = script.pos.clone();
+                token.lexeme = Table::StmtSep;
+
+                while let Some(c) = script.peek_char().await {
+                    match c {
+                        '\n' => {
+                            script.next_char().await.unwrap();
+                        }
+                        _ => break,
+                    }
+                }
+            }
+
             // Identifier or name
             'a'..='z' | 'A'..='Z' | '_' => {
                 lit.push(script.next_char().await.unwrap());

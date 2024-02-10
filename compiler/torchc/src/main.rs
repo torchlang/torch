@@ -40,9 +40,6 @@ async fn main() {
     let mut script: Script = content.to_script().await;
 
     while let Some(token) = lexer(&mut script).await {
-        print!(
-            "[{:?}|{}:{}] ",
-            token.lexeme, token.pos.line, token.pos.grapheme
-        );
+        print!("[{}] ", token.lit().await.unwrap());
     }
 }
