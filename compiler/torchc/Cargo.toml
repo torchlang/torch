@@ -7,4 +7,4 @@ edition = "2021"
 async-std = { version = "1.12.0", features = ["attributes"] }
 colored = "2.1.0"
 torchc_lits = { path = "../torchc_lits" }
-torchc_lex = { path = "../torchc_lex" }
+torchc_script = { path = "../torchc_script" }

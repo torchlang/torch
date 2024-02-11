@@ -1,0 +1,8 @@
+[package]
+name = "torchc_script"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+torchc_lex = { path = "../torchc_lex" }
+async-trait = "0.1.77"

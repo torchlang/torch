@@ -1,8 +1,8 @@
 use async_std::fs;
 use colored::Colorize;
 use std::panic;
-use torchc_lex::{lexer, Script, ToScript};
 use torchc_lits::lits;
+use torchc_script::{AsScript, Script};
 
 #[async_std::main]
 async fn main() {
@@ -37,9 +37,10 @@ async fn main() {
     let content: String = fs::read_to_string("../onedrive/escritorio/main.torch")
         .await
         .unwrap();
-    let mut script: Script = content.to_script().await;
+    let mut script: Script = content.as_script().await;
+    let mut iter = script.iter().await;
 
-    while let Some(token) = lexer(&mut script).await {
+    while let Some(token) = iter.next() {
         print!("[{}] ", token.lit().await.unwrap());
     }
 }
