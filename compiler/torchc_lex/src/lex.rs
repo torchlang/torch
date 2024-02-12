@@ -10,7 +10,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
 
     while let Some(c) = script.peek_char().await {
         match c {
-            // Skip token(s)
+            // Skip token(s).
             '\r' => {
                 script.next_char().await.unwrap();
                 continue;
@@ -31,8 +31,23 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                     }
                 }
             }
+            // Whitespaces.
+            ' ' | '\t' => {
+                script.next_char().await.unwrap();
+                token.pos = script.pos.clone();
+                token.lexeme = Table::Whitespace;
 
-            // Identifier or name
+                while let Some(c) = script.peek_char().await {
+                    match c {
+                        ' ' | '\t' => {
+                            script.next_char().await.unwrap();
+                        }
+                        _ => break,
+                    }
+                }
+            }
+
+            // Identifier or name.
             'a'..='z' | 'A'..='Z' | '_' => {
                 lit.push(script.next_char().await.unwrap());
                 token.pos = script.pos.clone();
@@ -48,7 +63,34 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                 token.lexeme = Table::Id(Some(lit.clone()));
             }
 
-            // Illegal token
+            // String literal.
+            '"' => {
+                script.next_char().await.unwrap();
+                token.pos = script.pos.clone();
+
+                while let Some(c) = script.next_char().await {
+                    match c {
+                        '"' => break,
+                        _ => lit.push(c),
+                    }
+                }
+                token.lexeme = Table::StringLit(Some(lit.clone()));
+            }
+            // Character literal.
+            '\'' => {
+                script.next_char().await.unwrap();
+                token.pos = script.pos.clone();
+
+                while let Some(c) = script.next_char().await {
+                    match c {
+                        '\'' => break,
+                        _ => lit.push(c),
+                    }
+                }
+                token.lexeme = Table::CharLit(Some(lit.clone()));
+            }
+
+            // Illegal token.
             _ => {
                 token.lexeme = Table::Illegal(Some(script.next_char().await.unwrap().to_string()));
                 token.pos = script.pos.clone();

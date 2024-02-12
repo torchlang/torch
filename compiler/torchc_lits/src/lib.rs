@@ -6,5 +6,6 @@ pub mod lits {
     /// Token table literals.
     pub mod token_table {
         pub const NEWLINE: &str = "\n";
+        pub const SPACE: &str = " ";
     }
 }
