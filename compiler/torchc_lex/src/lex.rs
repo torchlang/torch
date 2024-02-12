@@ -20,11 +20,11 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
             '\n' => {
                 script.next_char().await.unwrap();
                 token.pos = script.pos.clone();
-                token.lexeme = Table::StmtSep;
+                token.lexeme = Table::EndOfStmt;
 
                 while let Some(c) = script.peek_char().await {
                     match c {
-                        '\n' => {
+                        '\r' | '\n' => {
                             script.next_char().await.unwrap();
                         }
                         _ => break,
@@ -60,7 +60,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                         _ => break,
                     }
                 }
-                token.lexeme = Table::Id(Some(lit.clone()));
+                token.lexeme = Table::Id(Some(lit.into_bytes().into_boxed_slice()));
             }
 
             // String literal.
@@ -74,7 +74,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                         _ => lit.push(c),
                     }
                 }
-                token.lexeme = Table::StringLit(Some(lit.clone()));
+                token.lexeme = Table::StringLit(Some(lit.into_bytes().into_boxed_slice()));
             }
             // Character literal.
             '\'' => {
@@ -87,12 +87,20 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                         _ => lit.push(c),
                     }
                 }
-                token.lexeme = Table::CharLit(Some(lit.clone()));
+                token.lexeme = Table::CharLit(Some(lit.into_bytes().into_boxed_slice()));
             }
 
             // Illegal token.
             _ => {
-                token.lexeme = Table::Illegal(Some(script.next_char().await.unwrap().to_string()));
+                token.lexeme = Table::Illegal(Some(
+                    script
+                        .next_char()
+                        .await
+                        .unwrap()
+                        .to_string()
+                        .into_bytes()
+                        .into_boxed_slice(),
+                ));
                 token.pos = script.pos.clone();
             }
         }

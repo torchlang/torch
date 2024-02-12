@@ -1,6 +1,7 @@
 pub use crate::{lex::lexer, token_table::Table};
 use async_trait::async_trait;
 use std::{iter::Peekable, str::Chars};
+use torchc_lits::Lit;
 
 mod lex;
 mod token_table;
@@ -21,7 +22,7 @@ impl Token {
 
     /// Obtain the token literal.
     #[inline]
-    pub async fn lit(&self) -> Option<&str> {
+    pub async fn lit(&self) -> Option<Lit> {
         self.lexeme.lit().await
     }
 }

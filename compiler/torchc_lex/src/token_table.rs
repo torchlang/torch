@@ -1,20 +1,20 @@
 use self::Table::*;
-use torchc_lits::lits;
+use torchc_lits::{lits, Lit};
 
 #[derive(Debug)]
 #[repr(u8)]
 pub enum Table {
     /// `identifier_name`
-    Id(Option<String>),
+    Id(Option<Box<[u8]>>),
     /// `"..."`
-    StringLit(Option<String>),
+    StringLit(Option<Box<[u8]>>),
     /// `'...'`
-    CharLit(Option<String>),
+    CharLit(Option<Box<[u8]>>),
     /// `\n`
-    StmtSep,
+    EndOfStmt,
     /// `' '`<br>`\t`
     Whitespace,
-    Illegal(Option<String>),
+    Illegal(Option<Box<[u8]>>),
 }
 impl Table {
     #[inline]
@@ -24,14 +24,14 @@ impl Table {
 
     /// Obtain the token literal.
     #[inline]
-    pub async fn lit(&self) -> Option<&str> {
+    pub async fn lit(&self) -> Option<Lit> {
         Some(match self {
             Id(opt) | Illegal(opt) | CharLit(opt) | StringLit(opt) => match opt {
-                Some(lit) => lit,
+                Some(lit) => Lit::NonReserved(lit),
                 None => return None,
             },
-            Whitespace => lits::token_table::SPACE,
-            StmtSep => lits::token_table::NEWLINE,
+            Whitespace => Lit::Reserved(lits::token_table::SPACE),
+            EndOfStmt => Lit::Reserved(lits::token_table::SEMICOLON),
         })
     }
 }
