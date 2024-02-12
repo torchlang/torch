@@ -19,7 +19,37 @@ pub enum Table {
 impl Table {
     #[inline]
     pub async fn default() -> Self {
-        Self::Illegal(None)
+        Illegal(None)
+    }
+
+    /// Check what the token identifier is.
+    pub async fn is(&self, cmp: &Self) -> bool {
+        match self {
+            Id(_) => match cmp {
+                Id(_) => true,
+                _ => false,
+            },
+            EndOfStmt => match cmp {
+                EndOfStmt => true,
+                _ => false,
+            },
+            CharLit(_) => match cmp {
+                CharLit(_) => true,
+                _ => false,
+            },
+            StringLit(_) => match cmp {
+                StringLit(_) => true,
+                _ => false,
+            },
+            Whitespace => match cmp {
+                Whitespace => true,
+                _ => false,
+            },
+            Illegal(_) => match cmp {
+                Illegal(_) => true,
+                _ => false,
+            },
+        }
     }
 
     /// Obtain the token literal.

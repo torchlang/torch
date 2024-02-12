@@ -40,7 +40,7 @@ async fn main() {
     let mut script: Script = content.as_script().await;
     let mut iter = script.iter().await;
 
-    while let Some(token) = iter.next() {
+    while let Some(token) = iter.next_token().await {
         print!("[{}] ", token.lit().await.unwrap());
     }
 }

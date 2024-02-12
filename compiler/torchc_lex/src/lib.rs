@@ -20,6 +20,12 @@ impl Token {
         }
     }
 
+    /// Check what the token identifier is.
+    #[inline]
+    pub async fn is(&self, cmp: &Table) -> bool {
+        self.lexeme.is(cmp).await
+    }
+
     /// Obtain the token literal.
     #[inline]
     pub async fn lit(&self) -> Option<Lit> {
