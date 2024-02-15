@@ -6,7 +6,7 @@ use torchc_lits::Lit;
 mod lex;
 mod token_table;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Token {
     pub lexeme: Table,
     pub pos: Pos,
@@ -30,7 +30,7 @@ impl Token {
 }
 
 /// Script position.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Pos {
     pub line: usize,
     pub grapheme: usize,

@@ -7,19 +7,24 @@ use super::{Script, Table, Token};
 pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
     let mut token: Token = Token::new().await;
     let mut lit: String = String::new();
+    let mut prer: bool = false; // The previous character is `\r`?
 
     while let Some(c) = script.peek_char().await {
         match c {
             // Skip token(s).
             '\r' => {
                 script.next_char().await.unwrap();
+                prer = true;
                 continue;
             }
 
             // Statement separator(s).
             '\n' => {
+                token.pos = script.pos;
+                if !prer {
+                    token.pos.grapheme += 1;
+                }
                 script.next_char().await.unwrap();
-                token.pos = script.pos.clone();
                 token.lexeme = Table::EndOfStmt;
 
                 while let Some(c) = script.peek_char().await {
@@ -34,7 +39,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
             // Whitespaces.
             ' ' | '\t' => {
                 script.next_char().await.unwrap();
-                token.pos = script.pos.clone();
+                token.pos = script.pos;
                 token.lexeme = Table::Whitespace;
 
                 while let Some(c) = script.peek_char().await {
@@ -50,7 +55,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
             // Identifier or name.
             'a'..='z' | 'A'..='Z' | '_' => {
                 lit.push(script.next_char().await.unwrap());
-                token.pos = script.pos.clone();
+                token.pos = script.pos;
 
                 while let Some(c) = script.peek_char().await {
                     match c {
@@ -66,7 +71,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
             // String literal.
             '"' => {
                 lit.push(script.next_char().await.unwrap());
-                token.pos = script.pos.clone();
+                token.pos = script.pos;
 
                 while let Some(c) = script.next_char().await {
                     lit.push(c);
@@ -80,7 +85,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
             // Character literal.
             '\'' => {
                 lit.push(script.next_char().await.unwrap());
-                token.pos = script.pos.clone();
+                token.pos = script.pos;
 
                 while let Some(c) = script.next_char().await {
                     lit.push(c);
@@ -103,7 +108,7 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                         .into_bytes()
                         .into_boxed_slice(),
                 ));
-                token.pos = script.pos.clone();
+                token.pos = script.pos;
             }
         }
         return Some(token);

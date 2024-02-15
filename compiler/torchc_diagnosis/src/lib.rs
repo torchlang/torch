@@ -1,5 +1,5 @@
 use colored::Colorize;
-use torchc_lex::Token;
+use torchc_lex::{Pos, Table};
 use torchc_script::Script;
 
 const INDENT_LIT: &str = "       ";
@@ -17,43 +17,48 @@ const INDENT_LIT: &str = "       ";
 #[derive(Debug)]
 pub struct Diagnosis<'diagnosis> {
     /// Script path.
-    pub path: &'diagnosis str,
+    script: &'diagnosis str,
 }
 impl<'diagnosis> Diagnosis<'diagnosis> {
     pub async fn new(path: &'diagnosis str) -> Self {
-        Self { path }
+        Self { script: path }
     }
 
     /// Launch an error diagnostic and stop the execution.
-    pub async fn diagnosis(
-        &self,
-        msg: &str,
-        etoken: Token, /* Error token */
-        /*                ^     ^^^^^ etoken */
-        script: &mut Script,
-    ) {
+    pub async fn diagnosis(&self, msg: &str, pos: Pos, script: &mut Script) {
         let chunk_1: String = format!(
             "{} {} {}\n{}{} {} ",
             msg,
             "→".red().bold(),
-            self.path.bold(),
+            self.script.bold(),
             INDENT_LIT,
-            etoken.pos.line,
+            pos.line,
             "|".bold(),
         );
 
         let mut chunk_2: String = String::new();
         let mut chunk_3: String = String::new();
+        let mut lit: String = String::new();
+        let mut i: usize = pos.grapheme; // Indicator position (`↑`) of the illegal token.
         {
             script.reset();
             while let Some(token) = script.next_token().await {
                 // Skip the lines before the illegal token line.
-                if token.pos.line != etoken.pos.line {
+                if token.pos.line != pos.line {
                     continue;
                 }
 
                 // Illegal token line.
-                let mut after_illegal_token: bool = if token.pos.grapheme == etoken.pos.grapheme {
+
+                // Subtract the indentation from the indicator position, for reasons
+                // that the indentation is omitted in the diagnosis.
+                if token.pos.grapheme > 1 {
+                    i -= token.pos.grapheme;
+                }
+
+                // First token on the line.
+                let mut after_illegal_token: bool = if token.pos.grapheme == pos.grapheme {
+                    lit = format!("{}", token.lit().await.unwrap());
                     true
                 } else {
                     chunk_2.push_str(&format!("{}", token.lit().await.unwrap()));
@@ -61,11 +66,14 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
                 };
                 while let Some(token) = script.next_raw_token().await {
                     // Ends after "printing" the illegal token line.
-                    if token.pos.line > etoken.pos.line {
+                    if token.pos.line > pos.line {
                         break;
-                        // Illegal token.
-                    } else if token.pos.grapheme == etoken.pos.grapheme {
+                    }
+
+                    // Illegal token.
+                    if token.pos.grapheme == pos.grapheme {
                         after_illegal_token = true;
+                        lit = format!("{}", token.lit().await.unwrap());
                         continue;
                     }
 
@@ -84,22 +92,15 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
             "{}{}{}{}\n{}{}{} {}",
             chunk_1,
             chunk_2,
-            format!("{}", etoken.lit().await.unwrap()).red().bold(),
+            lit.red().bold(),
             chunk_3,
             // Line 3: `↑ 1`
             INDENT_LIT,
             // `1 | error line`
             //   ^^^ +3
-            " ".repeat(
-                3 + etoken.pos.line.to_string().len()
-                    + if etoken.pos.grapheme > 1 {
-                        etoken.pos.grapheme - 1
-                    } else {
-                        0
-                    }
-            ),
+            " ".repeat(3 + pos.line.to_string().len() + if i > 1 { i - 1 } else { 0 }),
             "↑".red().bold(),
-            etoken.pos.grapheme,
+            pos.grapheme,
         );
     }
 }
