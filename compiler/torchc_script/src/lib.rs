@@ -1,15 +1,37 @@
 use async_trait::async_trait;
-use torchc_lex::{lexer, ToScript, Token, Tokens};
+use torchc_lex::{lexer, Table, ToScript, Token};
 
 /// Handle the script by language tokens.
 #[derive(Debug)]
 pub struct Script {
     tokens: Vec<Token>,
+    i: usize,
 }
 impl Script {
-    #[inline]
-    pub async fn iter(&mut self) -> Tokens {
-        Tokens::new(self.tokens.iter()).await
+    /// Reset the iterator to the beginning.
+    pub async fn reset(&mut self) {
+        self.i = 0;
+    }
+
+    /// Obtain the next token taking into account all of them.
+    pub async fn next_raw_token(&mut self) -> Option<&Token> {
+        if self.i < self.tokens.len() {
+            self.i += 1;
+            Some(&self.tokens[self.i - 1])
+        } else {
+            None
+        }
+    }
+    /// Get only the next valid token.
+    pub async fn next_token(&mut self) -> Option<&Token> {
+        while self.i < self.tokens.len() {
+            self.i += 1;
+            if self.tokens[self.i - 1].is(&Table::Whitespace).await {
+                continue;
+            }
+            return Some(&self.tokens[self.i - 1]);
+        }
+        None
     }
 }
 
@@ -27,6 +49,6 @@ impl AsScript for String {
             tokens.push(token);
         }
 
-        Script { tokens }
+        Script { tokens, i: 0 }
     }
 }

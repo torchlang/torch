@@ -17,7 +17,6 @@ pub enum Table {
     Illegal(Option<Box<[u8]>>),
 }
 impl Table {
-    #[inline]
     pub async fn default() -> Self {
         Illegal(None)
     }
@@ -53,7 +52,6 @@ impl Table {
     }
 
     /// Obtain the token literal.
-    #[inline]
     pub async fn lit(&self) -> Option<Lit> {
         Some(match self {
             Id(opt) | Illegal(opt) | CharLit(opt) | StringLit(opt) => match opt {

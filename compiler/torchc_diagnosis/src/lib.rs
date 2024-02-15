@@ -17,10 +17,10 @@ pub struct Diagnosis<'diagnosis> {
     pub path: &'diagnosis str,
 }
 impl<'diagnosis> Diagnosis<'diagnosis> {
-    #[inline]
     pub async fn new(path: &'diagnosis str) -> Self {
         Self { path }
     }
+
     /// Launch an error diagnostic and stop the execution.
     pub async fn diagnosis(&self, msg: &str, token: &Token) {
         panic!(

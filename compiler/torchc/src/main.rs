@@ -2,7 +2,6 @@ use async_std::fs;
 use colored::Colorize;
 use std::panic;
 use torchc_diagnosis::Diagnosis;
-use torchc_lex::Tokens;
 use torchc_lits::lits;
 use torchc_parse::parser;
 use torchc_script::{AsScript, Script};
@@ -41,7 +40,6 @@ async fn main() {
     let content: String = fs::read_to_string(PATH).await.unwrap();
 
     let mut script: Script = content.as_script().await;
-    let mut iter: Tokens = script.iter().await;
     let mut diagnosis: Diagnosis = Diagnosis::new(PATH).await;
-    parser(&mut iter, &mut diagnosis).await;
+    parser(&mut script, &mut diagnosis).await;
 }
