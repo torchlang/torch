@@ -9,7 +9,7 @@ pub struct Script {
 }
 impl Script {
     /// Reset the iterator to the beginning.
-    pub async fn reset(&mut self) {
+    pub fn reset(&mut self) {
         self.i = 0;
     }
 

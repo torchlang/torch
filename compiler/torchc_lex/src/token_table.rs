@@ -1,7 +1,7 @@
 use self::Table::*;
 use torchc_lits::{lits, Lit};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(u8)]
 pub enum Table {
     /// `identifier_name`
