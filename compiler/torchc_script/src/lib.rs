@@ -1,6 +1,5 @@
 use async_trait::async_trait;
-use std::slice::Iter;
-use torchc_lex::{lexer, Table, ToScript, Token};
+use torchc_lex::{lexer, ToScript, Token, Tokens};
 
 /// Handle the script by language tokens.
 #[derive(Debug)]
@@ -29,31 +28,5 @@ impl AsScript for String {
         }
 
         Script { tokens }
-    }
-}
-#[derive(Debug)]
-pub struct Tokens<'tokens> {
-    iter: Iter<'tokens, Token>,
-}
-impl<'tokens> Tokens<'tokens> {
-    #[inline]
-    pub async fn new(iter: Iter<'tokens, Token>) -> Self {
-        Self { iter }
-    }
-    /// Obtain the next token taking into account all of them.
-    #[inline]
-    pub async fn next_raw_token(&mut self) -> Option<&Token> {
-        self.iter.next()
-    }
-    /// Get only the next valid token.
-    #[inline]
-    pub async fn next_token(&mut self) -> Option<&Token> {
-        while let Some(token) = self.iter.next() {
-            if token.is(&Table::Whitespace).await {
-                continue;
-            }
-            return Some(token);
-        }
-        None
     }
 }

@@ -1,7 +1,10 @@
 use async_std::fs;
 use colored::Colorize;
 use std::panic;
+use torchc_diagnosis::Diagnosis;
+use torchc_lex::Tokens;
 use torchc_lits::lits;
+use torchc_parse::parser;
 use torchc_script::{AsScript, Script};
 
 #[async_std::main]
@@ -34,13 +37,11 @@ async fn main() {
         );
     }));
 
-    let content: String = fs::read_to_string("../onedrive/escritorio/main.torch")
-        .await
-        .unwrap();
-    let mut script: Script = content.as_script().await;
-    let mut iter = script.iter().await;
+    const PATH: &str = "../onedrive/escritorio/main.t";
+    let content: String = fs::read_to_string(PATH).await.unwrap();
 
-    while let Some(token) = iter.next_token().await {
-        print!("[{}] ", token.lit().await.unwrap());
-    }
+    let mut script: Script = content.as_script().await;
+    let mut iter: Tokens = script.iter().await;
+    let mut diagnosis: Diagnosis = Diagnosis::new(PATH).await;
+    parser(&mut iter, &mut diagnosis).await;
 }

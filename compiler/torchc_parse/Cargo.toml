@@ -1,0 +1,8 @@
+[package]
+name = "torchc_parse"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+torchc_lex = { path = "../torchc_lex" }
+torchc_diagnosis = { path = "../torchc_diagnosis" }

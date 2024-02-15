@@ -1,6 +1,6 @@
 pub use crate::{lex::lexer, token_table::Table};
 use async_trait::async_trait;
-use std::{iter::Peekable, str::Chars};
+use std::{iter::Peekable, slice::Iter, str::Chars};
 use torchc_lits::Lit;
 
 mod lex;
@@ -25,7 +25,6 @@ impl Token {
     pub async fn is(&self, cmp: &Table) -> bool {
         self.lexeme.is(cmp).await
     }
-
     /// Obtain the token literal.
     #[inline]
     pub async fn lit(&self) -> Option<Lit> {
@@ -92,5 +91,32 @@ impl ToScript for String {
             buf: self.chars().peekable(),
             pos: Pos::default().await,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct Tokens<'tokens> {
+    iter: Iter<'tokens, Token>,
+}
+impl<'tokens> Tokens<'tokens> {
+    #[inline]
+    pub async fn new(iter: Iter<'tokens, Token>) -> Self {
+        Self { iter }
+    }
+    /// Obtain the next token taking into account all of them.
+    #[inline]
+    pub async fn next_raw_token(&mut self) -> Option<&Token> {
+        self.iter.next()
+    }
+    /// Get only the next valid token.
+    #[inline]
+    pub async fn next_token(&mut self) -> Option<&Token> {
+        while let Some(token) = self.iter.next() {
+            if token.is(&Table::Whitespace).await {
+                continue;
+            }
+            return Some(token);
+        }
+        None
     }
 }

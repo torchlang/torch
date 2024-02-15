@@ -1,8 +1,10 @@
 [workspace]
 members = [
     "compiler/torchc",
+    "compiler/torchc_diagnosis",
     "compiler/torchc_lex",
     "compiler/torchc_lits",
-    "compiler/torchc_script"
+    "compiler/torchc_parse",
+    "compiler/torchc_script",
 ]
 resolver = "2"

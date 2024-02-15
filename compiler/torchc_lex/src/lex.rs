@@ -65,26 +65,28 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
 
             // String literal.
             '"' => {
-                script.next_char().await.unwrap();
+                lit.push(script.next_char().await.unwrap());
                 token.pos = script.pos.clone();
 
                 while let Some(c) = script.next_char().await {
+                    lit.push(c);
                     match c {
                         '"' => break,
-                        _ => lit.push(c),
+                        _ => {}
                     }
                 }
                 token.lexeme = Table::StringLit(Some(lit.into_bytes().into_boxed_slice()));
             }
             // Character literal.
             '\'' => {
-                script.next_char().await.unwrap();
+                lit.push(script.next_char().await.unwrap());
                 token.pos = script.pos.clone();
 
                 while let Some(c) = script.next_char().await {
+                    lit.push(c);
                     match c {
                         '\'' => break,
-                        _ => lit.push(c),
+                        _ => {}
                     }
                 }
                 token.lexeme = Table::CharLit(Some(lit.into_bytes().into_boxed_slice()));
