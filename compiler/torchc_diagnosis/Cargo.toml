@@ -5,5 +5,6 @@ edition = "2021"
 
 [dependencies]
 colored = "2.1.0"
+async-std = "1.12.0"
 torchc_script = { path = "../torchc_script" }
 torchc_lex = { path = "../torchc_lex" }

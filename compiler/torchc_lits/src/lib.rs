@@ -5,6 +5,11 @@ pub mod lits {
     pub const EPREFIX: &str = "error";
     pub const COLON: &str = ":";
 
+    pub mod std_resources {
+        /// Folder name for the code in the language.
+        pub const SRC: &str = "src";
+    }
+
     /// Token table literals.
     pub mod token_table {
         pub const SEMICOLON: &str = ";";
@@ -23,7 +28,6 @@ pub enum Lit<'lit> {
     NonReserved(&'lit Box<[u8]>),
     Reserved(&'lit str),
 }
-#[cfg(debug_assertions)]
 impl<'lit> fmt::Display for Lit<'lit> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

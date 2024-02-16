@@ -1,4 +1,4 @@
-use async_std::fs;
+use async_std::{fs, path::PathBuf};
 use colored::Colorize;
 use std::panic;
 use torchc_diagnosis::Diagnosis;
@@ -36,10 +36,11 @@ async fn main() {
         );
     }));
 
-    const PATH: &str = "../onedrive/escritorio/main.t";
-    let content: String = fs::read_to_string(PATH).await.unwrap();
+    let mut path: PathBuf = std::env::current_dir().unwrap().into();
+    path.push("../onedrive/escritorio/main.t");
+    let content: String = fs::read_to_string(&path).await.unwrap();
 
     let mut script: Script = content.as_script().await;
-    let mut diagnosis: Diagnosis = Diagnosis::new(PATH).await;
+    let mut diagnosis: Diagnosis = Diagnosis::new(&path).await;
     parser(&mut script, &mut diagnosis).await;
 }

@@ -1,5 +1,6 @@
+use async_std::path::PathBuf;
 use colored::Colorize;
-use torchc_lex::{Pos, Table};
+use torchc_lex::Pos;
 use torchc_script::Script;
 
 const INDENT_LIT: &str = "       ";
@@ -17,10 +18,10 @@ const INDENT_LIT: &str = "       ";
 #[derive(Debug)]
 pub struct Diagnosis<'diagnosis> {
     /// Script path.
-    script: &'diagnosis str,
+    script: &'diagnosis PathBuf,
 }
 impl<'diagnosis> Diagnosis<'diagnosis> {
-    pub async fn new(path: &'diagnosis str) -> Self {
+    pub async fn new(path: &'diagnosis PathBuf) -> Self {
         Self { script: path }
     }
 
@@ -30,7 +31,12 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
             "{} {} {}\n{}{} {} ",
             msg,
             "→".red().bold(),
-            self.script.bold(),
+            //(lits::std_resources::SRC.to_string()+ "/"+
+            match self.script.to_str() {
+                Some(path) => path,
+                None => "",
+            }
+            .bold(),
             INDENT_LIT,
             pos.line,
             "|".bold(),
