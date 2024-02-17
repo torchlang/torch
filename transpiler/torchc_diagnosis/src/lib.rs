@@ -1,6 +1,6 @@
 use async_std::path::PathBuf;
 use colored::Colorize;
-use torchc_lex::Pos;
+use torchc_lex::{Pos, Table};
 use torchc_script::Script;
 
 const INDENT_LIT: &str = "       ";
@@ -72,7 +72,7 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
                 };
                 while let Some(token) = script.next_raw_token().await {
                     // Ends after "printing" the illegal token line.
-                    if token.pos.line > pos.line {
+                    if token.is(&Table::EndOfStmt).await || token.pos.line > pos.line {
                         break;
                     }
 
