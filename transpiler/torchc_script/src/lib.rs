@@ -21,7 +21,18 @@ impl Script {
             None
         }
     }
-
+    /// Get only the next valid token without advancing.
+    pub async fn peek_token(&self) -> Option<&Token> {
+        let mut i: usize = self.i;
+        while i < self.tokens.len() {
+            i += 1;
+            if self.tokens[i - 1].is(&Table::Whitespace).await {
+                continue;
+            }
+            return Some(&self.tokens[i - 1]);
+        }
+        None
+    }
     /// Obtain the next token taking into account all of them.
     pub async fn next_raw_token(&mut self) -> Option<&Token> {
         if self.i < self.tokens.len() {
@@ -79,13 +90,23 @@ impl AsScript for String {
             // Move the following tokens belonging to the comment content into `Cmt(_)`.
             if token.is(&Table::Cmt(None)).await {
                 let mut cmt: Vec<Token> = vec![];
+                let indent: usize = token.pos.grapheme;
+
+                // Comment content.
                 while let Some(token) = script.next_raw_token().await {
                     if token.is(&Table::EndOfStmt).await {
+                        // Multiline commentary based on indentation.
+                        if let Some(token) = script.peek_token().await {
+                            if token.pos.grapheme > indent {
+                                continue;
+                            }
+                        }
                         break;
                     }
                     cmt.push(token.clone());
                 }
 
+                // It is `Some(_)` only if content exists.
                 if !cmt.is_empty() {
                     token.lexeme = Table::Cmt(Some(cmt));
                 }
