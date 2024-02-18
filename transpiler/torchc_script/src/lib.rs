@@ -39,7 +39,7 @@ impl Script {
     }
 
     /// Iterate according to the selected mode.
-    pub async fn next_token(&mut self, mode: iter::Mode) -> Option<&Token> {
+    pub async fn token(&mut self, mode: iter::Mode) -> Option<&Token> {
         let mut i: usize = self.i;
         while i < self.tokens.len() {
             i += 1;
@@ -96,7 +96,7 @@ impl AsScript for String {
 
         let mut tokens: Vec<Token> = vec![];
 
-        while let Some(token) = script.next_token(Next(Feature::Default)).await {
+        while let Some(token) = script.token(Next(Feature::Default)).await {
             let mut token: Token = token.clone();
 
             // Move the following tokens belonging to the comment content into `Cmt(_)`.
@@ -105,10 +105,10 @@ impl AsScript for String {
                 let indent: usize = token.pos.grapheme;
 
                 // Comment content.
-                while let Some(token) = script.next_token(Next(Feature::Default)).await {
+                while let Some(token) = script.token(Next(Feature::Default)).await {
                     if token.is(&Table::EndOfStmt).await {
                         // Multiline commentary based on indentation.
-                        if let Some(token) = script.next_token(Peek(Feature::KeepCmt)).await {
+                        if let Some(token) = script.token(Peek(Feature::KeepCmt)).await {
                             if token.pos.grapheme > indent {
                                 continue;
                             }

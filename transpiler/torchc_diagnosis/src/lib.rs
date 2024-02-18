@@ -51,7 +51,7 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
         let mut i: usize = pos.grapheme; // Indicator position (`↑`) of the illegal token.
         {
             script.reset();
-            while let Some(token) = script.next_token(Next(Feature::Code)).await {
+            while let Some(token) = script.token(Next(Feature::Code)).await {
                 // Skip the lines before the illegal token line.
                 if token.pos.line != pos.line {
                     continue;
@@ -73,7 +73,7 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
                     chunk_2.push_str(&format!("{}", token.lit().await.unwrap()));
                     false
                 };
-                while let Some(token) = script.next_token(Next(Feature::Default)).await {
+                while let Some(token) = script.token(Next(Feature::Default)).await {
                     // Ends after "printing" the illegal token line.
                     if token.is(&Table::EndOfStmt).await || token.pos.line > pos.line {
                         break;

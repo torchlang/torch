@@ -5,7 +5,7 @@ use torchc_script::{
 };
 
 pub async fn parser(script: &mut Script, diagnosis: &mut Diagnosis<'_>) {
-    while let Some(token) = script.next_token(Next(Feature::Code)).await {
+    while let Some(token) = script.token(Next(Feature::Code)).await {
         diagnosis.diagnosis("illegal", token.pos, script).await;
         /*
         print!(
