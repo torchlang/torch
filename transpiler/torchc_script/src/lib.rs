@@ -45,7 +45,24 @@ impl AsScript for String {
     async fn as_script(&self) -> Script {
         let mut script: torchc_lex::Script = self.to_script().await;
         let mut tokens: Vec<Token> = vec![];
-        while let Some(token) = lexer(&mut script).await {
+
+        // Retokenizer.
+        while let Some(mut token) = lexer(&mut script).await {
+            // Move the following tokens belonging to the comment content into `Cmt(_)`.
+            if token.is(&Table::Cmt(None)).await {
+                let mut cmt: Vec<Token> = vec![];
+                while let Some(token2) = lexer(&mut script).await {
+                    if token2.is(&Table::EndOfStmt).await {
+                        break;
+                    }
+                    cmt.push(token2);
+                }
+                if !cmt.is_empty() {
+                    token.lexeme = Table::Cmt(Some(cmt));
+                }
+                tokens.push(token);
+                continue;
+            }
             tokens.push(token);
         }
 

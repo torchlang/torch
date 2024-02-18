@@ -97,6 +97,23 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                 token.lexeme = Table::CharLit(Some(lit.into_bytes().into_boxed_slice()));
             }
 
+            // Comment or division symbol.
+            '/' => {
+                script.next_char().await.unwrap();
+                token.pos = script.pos;
+
+                if let Some(c) = script.peek_char().await {
+                    // Comment.
+                    if *c == '/' {
+                        script.next_char().await.unwrap();
+                        token.lexeme = Table::Cmt(None); // Comment tokens are added in
+                                                         // the retokenization.
+                        return Some(token);
+                    }
+                }
+                token.lexeme = Table::DivisionSym;
+            }
+
             // Illegal token.
             _ => {
                 token.lexeme = Table::Illegal(Some(

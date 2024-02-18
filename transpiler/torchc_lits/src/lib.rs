@@ -12,8 +12,11 @@ pub mod lits {
 
     /// Token table literals.
     pub mod token_table {
-        pub const SEMICOLON: &str = ";";
+        pub const SEMICOLON_SYMBOL: &str = ";";
         pub const SPACE: &str = " ";
+        pub const DIVISION_SYMBOL: &str = "/";
+        /// Commentator.
+        pub const CMT: &str = "//";
     }
 }
 
@@ -25,14 +28,27 @@ pub mod lits {
 #[derive(Debug)]
 #[repr(u8)]
 pub enum Lit<'lit> {
-    NonReserved(&'lit Box<[u8]>),
+    /// Literals constructed during tokenization.
+    NonReserved(NonReserved<'lit>),
+    /// Predefined literals.
     Reserved(&'lit str),
 }
 impl<'lit> fmt::Display for Lit<'lit> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Lit::Reserved(lit) => f.write_str(lit),
-            Lit::NonReserved(lit) => f.write_str(&String::from_utf8_lossy(lit)),
+            Lit::NonReserved(lit) => match lit {
+                NonReserved::Primitive(lit) => f.write_str(&String::from_utf8_lossy(lit)),
+                NonReserved::Pseudo(lit) => f.write_str(lit),
+            },
         }
     }
+}
+#[derive(Debug)]
+#[repr(u8)]
+pub enum NonReserved<'non_reserved> {
+    /// Non-modifiable primitives.
+    Primitive(&'non_reserved Box<[u8]>),
+    /// Temporary constructions according to the context.
+    Pseudo(String),
 }
