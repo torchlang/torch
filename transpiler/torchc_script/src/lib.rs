@@ -1,14 +1,29 @@
+use self::iter::{
+    Feature,
+    Mode::{Next, Peek},
+};
 use async_trait::async_trait;
 use torchc_lex::{lexer, Table, ToScript, Token};
 
-/// Iteration advance mode.
-#[derive(Debug, PartialEq)]
-#[repr(u8)]
-pub enum IterMode {
-    /// Skip non-code tokens.
-    Default,
-    /// Keep the comments.
-    KeepCmt,
+pub mod iter {
+    #[derive(Debug)]
+    #[repr(u8)]
+    pub enum Mode {
+        /// Obtain and advance.
+        Next(Feature),
+        /// Obtain but not advance.
+        Peek(Feature),
+    }
+    #[derive(Debug, PartialEq, Clone, Copy)]
+    #[repr(u8)]
+    pub enum Feature {
+        /// Iterate all tokens.
+        Default,
+        /// Iterate only the code.
+        Code,
+        /// Keep the comments.
+        KeepCmt,
+    }
 }
 
 /// Handle the script by language tokens.
@@ -23,48 +38,30 @@ impl Script {
         self.i = 0;
     }
 
-    /// Obtain the next token without advancing taking into account all of them.
-    pub async fn peek_raw_token(&self) -> Option<&Token> {
-        if self.i < self.tokens.len() {
-            Some(&self.tokens[self.i])
-        } else {
-            None
-        }
-    }
-    /// Get only the next valid token without advancing.
-    pub async fn peek_token(&self, iter_mode: IterMode) -> Option<&Token> {
+    /// Iterate according to the selected mode.
+    pub async fn next_token(&mut self, mode: iter::Mode) -> Option<&Token> {
         let mut i: usize = self.i;
         while i < self.tokens.len() {
             i += 1;
-            if self.tokens[i - 1].is(&Table::Whitespace).await
-                || iter_mode != IterMode::KeepCmt && self.tokens[i - 1].is(&Table::Cmt(None)).await
-            {
-                continue;
+            match mode {
+                Peek(ft) | Next(ft) => {
+                    match mode {
+                        Next(_) => {
+                            self.i += 1;
+                        }
+                        Peek(_) => {}
+                    }
+
+                    if ft == Feature::Code
+                        && (self.tokens[i - 1].is(&Table::Whitespace).await
+                            || self.tokens[i - 1].is(&Table::Cmt(None)).await)
+                        || ft == Feature::KeepCmt && self.tokens[i - 1].is(&Table::Whitespace).await
+                    {
+                        continue;
+                    }
+                }
             }
             return Some(&self.tokens[i - 1]);
-        }
-        None
-    }
-    /// Obtain the next token taking into account all of them.
-    pub async fn next_raw_token(&mut self) -> Option<&Token> {
-        if self.i < self.tokens.len() {
-            self.i += 1;
-            Some(&self.tokens[self.i - 1])
-        } else {
-            None
-        }
-    }
-    /// Get only the next valid token.
-    pub async fn next_token(&mut self, iter_mode: IterMode) -> Option<&Token> {
-        while self.i < self.tokens.len() {
-            self.i += 1;
-            if self.tokens[self.i - 1].is(&Table::Whitespace).await
-                || iter_mode != IterMode::KeepCmt
-                    && self.tokens[self.i - 1].is(&Table::Cmt(None)).await
-            {
-                continue;
-            }
-            return Some(&self.tokens[self.i - 1]);
         }
         None
     }
@@ -99,7 +96,7 @@ impl AsScript for String {
 
         let mut tokens: Vec<Token> = vec![];
 
-        while let Some(token) = script.next_raw_token().await {
+        while let Some(token) = script.next_token(Next(Feature::Default)).await {
             let mut token: Token = token.clone();
 
             // Move the following tokens belonging to the comment content into `Cmt(_)`.
@@ -108,10 +105,10 @@ impl AsScript for String {
                 let indent: usize = token.pos.grapheme;
 
                 // Comment content.
-                while let Some(token) = script.next_raw_token().await {
+                while let Some(token) = script.next_token(Next(Feature::Default)).await {
                     if token.is(&Table::EndOfStmt).await {
                         // Multiline commentary based on indentation.
-                        if let Some(token) = script.peek_token(IterMode::KeepCmt).await {
+                        if let Some(token) = script.next_token(Peek(Feature::KeepCmt)).await {
                             if token.pos.grapheme > indent {
                                 continue;
                             }
