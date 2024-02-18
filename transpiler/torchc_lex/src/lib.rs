@@ -6,7 +6,7 @@ use torchc_lits::Lit;
 mod lex;
 mod token_table;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Token {
     pub lexeme: Table,
     pub pos: Pos,

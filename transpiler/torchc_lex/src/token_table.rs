@@ -2,7 +2,7 @@ use super::{Table::*, Token};
 use async_recursion::async_recursion;
 use torchc_lits::{lits, Lit, NonReserved};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[repr(u8)]
 pub enum Table {
     /// `identifier_name`
