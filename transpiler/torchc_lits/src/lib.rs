@@ -15,7 +15,7 @@ pub mod lits {
         pub const SEMICOLON_SYMBOL: &str = ";";
         pub const SPACE: &str = " ";
         pub const DIVISION_SYMBOL: &str = "/";
-        /// Commentator.
+        /// Commentator's literal.
         pub const CMT: &str = "//";
     }
 }

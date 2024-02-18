@@ -1,6 +1,5 @@
-use std::{future::Future, pin::Pin};
-
 use super::{Table::*, Token};
+use async_recursion::async_recursion;
 use torchc_lits::{lits, Lit, NonReserved};
 
 #[derive(Debug)]
@@ -66,6 +65,7 @@ impl Table {
     }
 
     /// Obtain the token literal.
+    #[async_recursion]
     pub async fn lit(&self) -> Option<Lit> {
         Some(match self {
             Id(opt) | Illegal(opt) | CharLit(opt) | StringLit(opt) => match opt {
@@ -79,9 +79,7 @@ impl Table {
                 Some(tokens) => {
                     let mut lit: String = String::from(lits::token_table::CMT);
                     for token in tokens {
-                        let future: Pin<Box<dyn Future<Output = Option<Lit>>>> =
-                            Box::pin(token.lit());
-                        lit.push_str(&match future.await {
+                        lit.push_str(&match token.lit().await {
                             Some(lit) => format!("{}", lit),
                             None => String::new(),
                         })
