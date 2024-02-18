@@ -1,8 +1,10 @@
 use torchc_diagnosis::Diagnosis;
-use torchc_script::Script;
+use torchc_script::{IterMode, Script};
 
 pub async fn parser(script: &mut Script, diagnosis: &mut Diagnosis<'_>) {
-    while let Some(token) = script.next_raw_token().await {
+    while let Some(token) = script.next_token(IterMode::Default).await {
+        diagnosis.diagnosis("illegal", token.pos, script).await;
+        /*
         print!(
             "[{}] ",
             match token.lit().await {
@@ -10,6 +12,6 @@ pub async fn parser(script: &mut Script, diagnosis: &mut Diagnosis<'_>) {
                 None => String::new(),
             }
         );
-        //diagnosis.diagnosis("illegal", token.pos, script).await;
+        */
     }
 }

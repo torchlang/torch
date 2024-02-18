@@ -1,7 +1,7 @@
 use async_std::path::PathBuf;
 use colored::Colorize;
 use torchc_lex::{Pos, Table};
-use torchc_script::Script;
+use torchc_script::{IterMode, Script};
 
 const INDENT_LIT: &str = "       ";
 
@@ -48,7 +48,7 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
         let mut i: usize = pos.grapheme; // Indicator position (`↑`) of the illegal token.
         {
             script.reset();
-            while let Some(token) = script.next_token().await {
+            while let Some(token) = script.next_token(IterMode::Default).await {
                 // Skip the lines before the illegal token line.
                 if token.pos.line != pos.line {
                     continue;

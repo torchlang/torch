@@ -1,6 +1,16 @@
 use async_trait::async_trait;
 use torchc_lex::{lexer, Table, ToScript, Token};
 
+/// Iteration advance mode.
+#[derive(Debug, PartialEq)]
+#[repr(u8)]
+pub enum IterMode {
+    /// Skip non-code tokens.
+    Default,
+    /// Keep the comments.
+    KeepCmt,
+}
+
 /// Handle the script by language tokens.
 #[derive(Debug)]
 pub struct Script {
@@ -22,11 +32,13 @@ impl Script {
         }
     }
     /// Get only the next valid token without advancing.
-    pub async fn peek_token(&self) -> Option<&Token> {
+    pub async fn peek_token(&self, iter_mode: IterMode) -> Option<&Token> {
         let mut i: usize = self.i;
         while i < self.tokens.len() {
             i += 1;
-            if self.tokens[i - 1].is(&Table::Whitespace).await {
+            if self.tokens[i - 1].is(&Table::Whitespace).await
+                || iter_mode != IterMode::KeepCmt && self.tokens[i - 1].is(&Table::Cmt(None)).await
+            {
                 continue;
             }
             return Some(&self.tokens[i - 1]);
@@ -43,10 +55,13 @@ impl Script {
         }
     }
     /// Get only the next valid token.
-    pub async fn next_token(&mut self) -> Option<&Token> {
+    pub async fn next_token(&mut self, iter_mode: IterMode) -> Option<&Token> {
         while self.i < self.tokens.len() {
             self.i += 1;
-            if self.tokens[self.i - 1].is(&Table::Whitespace).await {
+            if self.tokens[self.i - 1].is(&Table::Whitespace).await
+                || iter_mode != IterMode::KeepCmt
+                    && self.tokens[self.i - 1].is(&Table::Cmt(None)).await
+            {
                 continue;
             }
             return Some(&self.tokens[self.i - 1]);
@@ -96,7 +111,7 @@ impl AsScript for String {
                 while let Some(token) = script.next_raw_token().await {
                     if token.is(&Table::EndOfStmt).await {
                         // Multiline commentary based on indentation.
-                        if let Some(token) = script.peek_token().await {
+                        if let Some(token) = script.peek_token(IterMode::KeepCmt).await {
                             if token.pos.grapheme > indent {
                                 continue;
                             }
