@@ -21,8 +21,8 @@ pub mod iter {
         Default,
         /// Iterate only the code.
         Code,
-        /// Keep the comments.
-        KeepCmt,
+        /// Iterate only the code and comments.
+        CodeAndCmts,
     }
 }
 
@@ -55,7 +55,7 @@ impl Script {
                     if ft == Feature::Code
                         && (self.tokens[i - 1].is(&Table::Whitespace).await
                             || self.tokens[i - 1].is(&Table::Cmt(None)).await)
-                        || ft == Feature::KeepCmt && self.tokens[i - 1].is(&Table::Whitespace).await
+                        || ft == Feature::CodeAndCmts && self.tokens[i - 1].is(&Table::Whitespace).await
                     {
                         continue;
                     }
@@ -108,7 +108,7 @@ impl AsScript for String {
                 while let Some(token) = script.token(Next(Feature::Default)).await {
                     if token.is(&Table::EndOfStmt).await {
                         // Multiline commentary based on indentation.
-                        if let Some(token) = script.token(Peek(Feature::KeepCmt)).await {
+                        if let Some(token) = script.token(Peek(Feature::CodeAndCmts)).await {
                             if token.pos.grapheme > indent {
                                 continue;
                             }
