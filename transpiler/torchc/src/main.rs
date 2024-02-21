@@ -40,7 +40,7 @@ async fn main() {
     path.push("../onedrive/escritorio/main.t");
     let content: String = fs::read_to_string(&path).await.unwrap();
 
-    let mut script: Script = content.as_script().await;
-    let mut diagnosis: Diagnosis = Diagnosis::new(&path).await;
-    parser(&mut script, &mut diagnosis).await;
+    let mut script: Script = content.as_script();
+    let mut diagnosis: Diagnosis = Diagnosis::new(&path);
+    parser(&mut script, &mut diagnosis);
 }

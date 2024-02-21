@@ -2,7 +2,6 @@ use self::iter::{
     Feature,
     Mode::{Next, Peek},
 };
-use async_trait::async_trait;
 use torchc_lex::{lexer, Table, ToScript, Token};
 
 pub mod iter {
@@ -39,7 +38,7 @@ impl Script {
     }
 
     /// Iterate according to the selected mode.
-    pub async fn token(&mut self, mode: iter::Mode) -> Option<&Token> {
+    pub fn token(&mut self, mode: iter::Mode) -> Option<&Token> {
         let mut i: usize = self.i;
         while i < self.tokens.len() {
             i += 1;
@@ -53,9 +52,9 @@ impl Script {
                     }
 
                     if ft == Feature::Code
-                        && (self.tokens[i - 1].is(&Table::Whitespace).await
-                            || self.tokens[i - 1].is(&Table::Cmt(None)).await)
-                        || ft == Feature::CodeAndCmts && self.tokens[i - 1].is(&Table::Whitespace).await
+                        && (self.tokens[i - 1].is(&Table::Whitespace)
+                            || self.tokens[i - 1].is(&Table::Cmt(None)))
+                        || ft == Feature::CodeAndCmts && self.tokens[i - 1].is(&Table::Whitespace)
                     {
                         continue;
                     }
@@ -67,23 +66,21 @@ impl Script {
     }
 }
 
-#[async_trait]
 pub trait AsScript {
     /// Interprets the script string as a token vector.
-    async fn as_script(&self) -> Script;
+    fn as_script(&self) -> Script;
 }
-#[async_trait]
 impl AsScript for String {
-    async fn as_script(&self) -> Script {
+    fn as_script(&self) -> Script {
         let mut script: Script = {
-            let mut script: torchc_lex::Script = self.to_script().await;
+            let mut script: torchc_lex::Script = self.to_script();
             let mut tokens: Vec<Token> = vec![];
-            while let Some(token) = lexer(&mut script).await {
+            while let Some(token) = lexer(&mut script) {
                 tokens.push(token);
             }
             // Replace `EOF` with `;`.
-            if !tokens[tokens.len() - 1].is(&Table::EndOfStmt).await {
-                let mut token: Token = Token::new().await;
+            if !tokens[tokens.len() - 1].is(&Table::EndOfStmt) {
+                let mut token: Token = Token::new();
                 token.pos = tokens[tokens.len() - 1].pos;
                 token.pos.grapheme = script.pos.grapheme + 1;
                 token.lexeme = Table::EndOfStmt;
@@ -96,19 +93,19 @@ impl AsScript for String {
 
         let mut tokens: Vec<Token> = vec![];
 
-        while let Some(token) = script.token(Next(Feature::Default)).await {
+        while let Some(token) = script.token(Next(Feature::Default)) {
             let mut token: Token = token.clone();
 
             // Move the following tokens belonging to the comment content into `Cmt(_)`.
-            if token.is(&Table::Cmt(None)).await {
+            if token.is(&Table::Cmt(None)) {
                 let mut cmt: Vec<Token> = vec![];
                 let indent: usize = token.pos.grapheme;
 
                 // Comment content.
-                while let Some(token) = script.token(Next(Feature::Default)).await {
-                    if token.is(&Table::EndOfStmt).await {
+                while let Some(token) = script.token(Next(Feature::Default)) {
+                    if token.is(&Table::EndOfStmt) {
                         // Multiline commentary based on indentation.
-                        if let Some(token) = script.token(Peek(Feature::CodeAndCmts)).await {
+                        if let Some(token) = script.token(Peek(Feature::CodeAndCmts)) {
                             if token.pos.grapheme > indent {
                                 continue;
                             }

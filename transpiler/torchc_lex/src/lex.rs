@@ -4,16 +4,16 @@ use super::{Script, Table, Token};
 ///
 /// ---
 /// _**Lexicographic Analyzer**_
-pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
-    let mut token: Token = Token::new().await;
+pub fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
+    let mut token: Token = Token::new();
     let mut lit: String = String::new();
     let mut prer: bool = false; // The previous character is `\r`?
 
-    while let Some(c) = script.peek_char().await {
+    while let Some(c) = script.peek_char() {
         match c {
             // Skip token(s).
             '\r' => {
-                script.next_char().await.unwrap();
+                script.next_char().unwrap();
                 prer = true;
                 continue;
             }
@@ -24,13 +24,13 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                 if !prer {
                     token.pos.grapheme += 1;
                 }
-                script.next_char().await.unwrap();
+                script.next_char().unwrap();
                 token.lexeme = Table::EndOfStmt;
 
-                while let Some(c) = script.peek_char().await {
+                while let Some(c) = script.peek_char() {
                     match c {
                         '\r' | '\n' => {
-                            script.next_char().await.unwrap();
+                            script.next_char().unwrap();
                         }
                         _ => break,
                     }
@@ -38,14 +38,14 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
             }
             // Whitespaces.
             ' ' | '\t' => {
-                script.next_char().await.unwrap();
+                script.next_char().unwrap();
                 token.pos = script.pos;
                 token.lexeme = Table::Whitespace;
 
-                while let Some(c) = script.peek_char().await {
+                while let Some(c) = script.peek_char() {
                     match c {
                         ' ' | '\t' => {
-                            script.next_char().await.unwrap();
+                            script.next_char().unwrap();
                         }
                         _ => break,
                     }
@@ -54,13 +54,13 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
 
             // Identifier or name.
             'a'..='z' | 'A'..='Z' | '_' => {
-                lit.push(script.next_char().await.unwrap());
+                lit.push(script.next_char().unwrap());
                 token.pos = script.pos;
 
-                while let Some(c) = script.peek_char().await {
+                while let Some(c) = script.peek_char() {
                     match c {
                         'a'..='z' | 'A'..='Z' | '0'..='9' | '_' => {
-                            lit.push(script.next_char().await.unwrap())
+                            lit.push(script.next_char().unwrap())
                         }
                         _ => break,
                     }
@@ -70,10 +70,10 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
 
             // String literal.
             '"' => {
-                lit.push(script.next_char().await.unwrap());
+                lit.push(script.next_char().unwrap());
                 token.pos = script.pos;
 
-                while let Some(c) = script.next_char().await {
+                while let Some(c) = script.next_char() {
                     lit.push(c);
                     match c {
                         '"' => break,
@@ -84,10 +84,10 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
             }
             // Character literal.
             '\'' => {
-                lit.push(script.next_char().await.unwrap());
+                lit.push(script.next_char().unwrap());
                 token.pos = script.pos;
 
-                while let Some(c) = script.next_char().await {
+                while let Some(c) = script.next_char() {
                     lit.push(c);
                     match c {
                         '\'' => break,
@@ -99,13 +99,13 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
 
             // Comment or division symbol.
             '/' => {
-                script.next_char().await.unwrap();
+                script.next_char().unwrap();
                 token.pos = script.pos;
 
-                if let Some(c) = script.peek_char().await {
+                if let Some(c) = script.peek_char() {
                     // Comment.
                     if *c == '/' {
-                        script.next_char().await.unwrap();
+                        script.next_char().unwrap();
                         token.lexeme = Table::Cmt(None); // Comment tokens are added in
                                                          // the retokenization.
                         return Some(token);
@@ -119,7 +119,6 @@ pub async fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                 token.lexeme = Table::Illegal(Some(
                     script
                         .next_char()
-                        .await
                         .unwrap()
                         .to_string()
                         .into_bytes()

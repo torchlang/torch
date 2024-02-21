@@ -24,12 +24,12 @@ pub struct Diagnosis<'diagnosis> {
     script: &'diagnosis PathBuf,
 }
 impl<'diagnosis> Diagnosis<'diagnosis> {
-    pub async fn new(path: &'diagnosis PathBuf) -> Self {
+    pub fn new(path: &'diagnosis PathBuf) -> Self {
         Self { script: path }
     }
 
     /// Launch an error diagnostic and stop the execution.
-    pub async fn diagnosis(&self, msg: &str, pos: Pos, script: &mut Script) {
+    pub fn diagnosis(&self, msg: &str, pos: Pos, script: &mut Script) {
         let chunk_1: String = format!(
             "{} {} {}\n{}{} {} ",
             msg,
@@ -51,7 +51,7 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
         let mut i: usize = pos.grapheme; // Indicator position (`↑`) of the illegal token.
         {
             script.reset();
-            while let Some(token) = script.token(Next(Feature::Code)).await {
+            while let Some(token) = script.token(Next(Feature::Code)) {
                 // Skip the lines before the illegal token line.
                 if token.pos.line != pos.line {
                     continue;
@@ -67,29 +67,29 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
 
                 // First token on the line.
                 let mut after_illegal_token: bool = if token.pos.grapheme == pos.grapheme {
-                    lit = format!("{}", token.lit().await.unwrap());
+                    lit = format!("{}", token.lit().unwrap());
                     true
                 } else {
-                    chunk_2.push_str(&format!("{}", token.lit().await.unwrap()));
+                    chunk_2.push_str(&format!("{}", token.lit().unwrap()));
                     false
                 };
-                while let Some(token) = script.token(Next(Feature::Default)).await {
+                while let Some(token) = script.token(Next(Feature::Default)) {
                     // Ends after "printing" the illegal token line.
-                    if token.is(&Table::EndOfStmt).await || token.pos.line > pos.line {
+                    if token.is(&Table::EndOfStmt) || token.pos.line > pos.line {
                         break;
                     }
 
                     // Illegal token.
                     if token.pos.grapheme == pos.grapheme {
                         after_illegal_token = true;
-                        lit = format!("{}", token.lit().await.unwrap());
+                        lit = format!("{}", token.lit().unwrap());
                         continue;
                     }
 
                     if after_illegal_token {
-                        chunk_3.push_str(&format!("{}", token.lit().await.unwrap()));
+                        chunk_3.push_str(&format!("{}", token.lit().unwrap()));
                     } else {
-                        chunk_2.push_str(&format!("{}", token.lit().await.unwrap()));
+                        chunk_2.push_str(&format!("{}", token.lit().unwrap()));
                     }
                 }
                 break;

@@ -1,5 +1,4 @@
 use super::{Table::*, Token};
-use async_recursion::async_recursion;
 use torchc_lits::{lits, Lit, NonReserved};
 
 #[derive(Debug, Clone)]
@@ -22,12 +21,12 @@ pub enum Table {
     Illegal(Option<Box<[u8]>>),
 }
 impl Table {
-    pub async fn default() -> Self {
+    pub fn default() -> Self {
         Illegal(None)
     }
 
     /// Check what the token identifier is.
-    pub async fn is(&self, cmp: &Self) -> bool {
+    pub fn is(&self, cmp: &Self) -> bool {
         match self {
             Id(_) => match cmp {
                 Id(_) => true,
@@ -65,8 +64,7 @@ impl Table {
     }
 
     /// Obtain the token literal.
-    #[async_recursion]
-    pub async fn lit(&self) -> Option<Lit> {
+    pub fn lit(&self) -> Option<Lit> {
         Some(match self {
             Id(opt) | Illegal(opt) | CharLit(opt) | StringLit(opt) => match opt {
                 Some(lit) => Lit::NonReserved(NonReserved::Primitive(lit)),
@@ -79,7 +77,7 @@ impl Table {
                 Some(tokens) => {
                     let mut lit: String = String::from(lits::token_table::CMT);
                     for token in tokens {
-                        lit.push_str(&match token.lit().await {
+                        lit.push_str(&match token.lit() {
                             Some(lit) => format!("{}", lit),
                             None => String::new(),
                         })
