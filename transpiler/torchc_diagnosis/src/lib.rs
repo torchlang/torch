@@ -1,5 +1,6 @@
-use async_std::path::PathBuf;
+use async_std::path::Path;
 use colored::Colorize;
+use pathdiff::diff_paths;
 use torchc_lex::{Pos, Table};
 use torchc_script::{
     iter::{Feature, Mode::Next},
@@ -21,15 +22,17 @@ const INDENT_LIT: &str = "       ";
 #[derive(Debug)]
 pub struct Diagnosis<'diagnosis> {
     /// Script path.
-    script: &'diagnosis PathBuf,
+    script: &'diagnosis Path,
+    cwd: &'diagnosis Path,
 }
 impl<'diagnosis> Diagnosis<'diagnosis> {
-    pub fn new(path: &'diagnosis PathBuf) -> Self {
-        Self { script: path }
+    pub fn new(path: &'diagnosis Path, cwd: &'diagnosis Path) -> Self {
+        Self { script: path, cwd }
     }
 
     /// Launch an error diagnostic and stop the execution.
     pub fn diagnosis(&self, msg: &str, pos: Pos, script: &mut Script) {
+        diff_paths(self.script, self.cwd);
         let chunk_1: String = format!(
             "{} {} {}\n{}{} {} ",
             msg,

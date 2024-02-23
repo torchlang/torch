@@ -7,5 +7,5 @@ members = [
     "transpiler/torchc_lits",
     "transpiler/torchc_parse",
     "transpiler/torchc_script",
-    "transpiler/torchc_walkdir",
+    "transpiler/torchc_hike",
 ]

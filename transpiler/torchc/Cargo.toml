@@ -14,3 +14,4 @@ torchc_lits = { path = "../torchc_lits" }
 torchc_script = { path = "../torchc_script" }
 torchc_parse = { path = "../torchc_parse" }
 torchc_diagnosis = { path = "../torchc_diagnosis" }
+torchc_hike = { path = "../torchc_hike" }

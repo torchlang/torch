@@ -1,11 +1,11 @@
 [package]
-name = "torchc_diagnosis"
+name = "torchc_hike"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-colored = "2.1.0"
 async-std = "1.12.0"
+async-walkdir = "1.0.0"
+torchc_lits = { path = "../torchc_lits" }
 torchc_script = { path = "../torchc_script" }
-torchc_lex = { path = "../torchc_lex" }
-pathdiff = "0.2.1"
+colored = "2.1.0"
