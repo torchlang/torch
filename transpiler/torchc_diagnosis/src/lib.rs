@@ -2,19 +2,18 @@ use async_std::path::Path;
 use colored::Colorize;
 use pathdiff::diff_paths;
 use torchc_lex::{Pos, Table};
+use torchc_lits::lits;
 use torchc_script::{
     iter::{Feature, Mode::Next},
     Script,
 };
-
-const INDENT_LIT: &str = "       ";
 
 /// Handles the diagnosis of language errors.
 ///
 /// ---
 /// **Format:**
 ///
-/// `error: message → file`<br>
+/// `error: message → src/file`<br>
 /// &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
 /// `1 | line`<br>
 /// &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -32,18 +31,23 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
 
     /// Launch an error diagnostic and stop the execution.
     pub fn diagnosis(&self, msg: &str, pos: Pos, script: &mut Script) {
-        diff_paths(self.script, self.cwd);
+        // `error: message → src/file`
+        //       ^^ +2
+        let mut indent: String = " ".repeat(lits::EPREFIX.len() + 2);
+
         let chunk_1: String = format!(
             "{} {} {}\n{}{} {} ",
             msg,
             "→".red().bold(),
-            //(lits::std_resources::SRC.to_string()+ "/"+
-            match self.script.to_str() {
-                Some(path) => path,
-                None => "",
+            match diff_paths(self.script, self.cwd) {
+                Some(src) => match src.to_str() {
+                    Some(path) => String::from(path),
+                    None => String::new(),
+                },
+                None => String::from(lits::std_resources::SRC),
             }
             .bold(),
-            INDENT_LIT,
+            indent,
             pos.line,
             "|".bold(),
         );
@@ -99,18 +103,20 @@ impl<'diagnosis> Diagnosis<'diagnosis> {
             }
         }
 
+        // `1 | error line`
+        //   ^^^ +3
+        indent
+            .push_str(&" ".repeat(3 + pos.line.to_string().len() + if i > 1 { i - 1 } else { 0 }));
+
         // Everything is printed until the `panic` is launched.
         panic!(
-            "{}{}{}{}\n{}{}{} {}",
+            "{}{}{}{}\n{}{} {}",
             chunk_1,
             chunk_2,
             lit.red().bold(),
             chunk_3,
             // Line 3: `↑ 1`
-            INDENT_LIT,
-            // `1 | error line`
-            //   ^^^ +3
-            " ".repeat(3 + pos.line.to_string().len() + if i > 1 { i - 1 } else { 0 }),
+            indent,
             "↑".red().bold(),
             pos.grapheme,
         );
