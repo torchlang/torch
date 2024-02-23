@@ -4,6 +4,7 @@ use core::fmt;
 pub mod lits {
     pub const EPREFIX: &str = "error";
     pub const COLON: &str = ":";
+    pub const CURRENT: &str = "current";
 
     pub mod std_resources {
         /// Folder name for the code in the language.
@@ -17,6 +18,7 @@ pub mod lits {
         pub const DIVISION_SYMBOL: &str = "/";
         /// Commentator's literal.
         pub const CMT: &str = "//";
+        pub const FN: &str = "fn";
     }
 }
 

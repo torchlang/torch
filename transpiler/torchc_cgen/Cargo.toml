@@ -1,0 +1,7 @@
+[package]
+name = "torchc_cgen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+torchc_lex = { path = "../torchc_lex" }

@@ -47,7 +47,6 @@ async fn main() {
     let mut src: PathBuf = cwd.clone();
     src.push(lits::std_resources::SRC);
     let scripts: Vec<PathBuf> = hike(&src, &cwd).await;
-    println!("{:?}", scripts);
 
     let mut path: PathBuf = src.clone().to_path_buf();
     path.push("main.t");

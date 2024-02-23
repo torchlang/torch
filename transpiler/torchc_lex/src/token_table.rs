@@ -6,6 +6,8 @@ use torchc_lits::{lits, Lit, NonReserved};
 pub enum Table {
     /// `identifier_name`
     Id(Option<Box<[u8]>>),
+    /// `fn`
+    Fn,
     /// `"..."`
     StringLit(Option<Box<[u8]>>),
     /// `'...'`
@@ -30,6 +32,10 @@ impl Table {
         match self {
             Id(_) => match cmp {
                 Id(_) => true,
+                _ => false,
+            },
+            Fn => match cmp {
+                Fn => true,
                 _ => false,
             },
             EndOfStmt => match cmp {
@@ -70,6 +76,7 @@ impl Table {
                 Some(lit) => Lit::NonReserved(NonReserved::Primitive(lit)),
                 None => return None,
             },
+            Fn => Lit::Reserved(lits::token_table::FN),
             Whitespace => Lit::Reserved(lits::token_table::SPACE),
             EndOfStmt => Lit::Reserved(lits::token_table::SEMICOLON_SYMBOL),
             DivisionSym => Lit::Reserved(lits::token_table::DIVISION_SYMBOL),
