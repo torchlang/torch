@@ -6,9 +6,23 @@ pub mod lits {
     pub const COLON: &str = ":";
     pub const CURRENT: &str = "current";
 
+    pub mod extensions {
+        /// `file.t`
+        pub const T: &str = "t";
+        /// `file.h`
+        pub const H: &str = "h";
+        /// `file.c`
+        pub const C: &str = "c";
+        /// `file.cpp`
+        pub const CPP: &str = "cpp";
+        /// `file.c++`
+        pub const CPP2: &str = "c++";
+    }
     pub mod std_resources {
         /// Folder name for the code in the language.
         pub const SRC: &str = "src";
+        /// Compilation hidden folder name.
+        pub const DOT_TARGET: &str = ".target";
     }
 
     /// Token table literals.

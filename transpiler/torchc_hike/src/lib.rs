@@ -4,6 +4,7 @@ use async_std::{
 };
 use async_walkdir::WalkDir;
 use colored::Colorize;
+use std::ffi::OsString;
 use torchc_lits::lits;
 
 /// Scans the `src/` directory within the current working directory (`cwd`) for
@@ -29,11 +30,14 @@ pub async fn hike(src: &Path, cwd: &Path) -> Vec<PathBuf> {
                 if path.is_file().await {
                     match path.extension() {
                         Some(ext)
-                            if ext == "t"
-                                || ext == "h"
-                                || ext == "c"
-                                || ext == "cpp"
-                                || ext == "c++" =>
+                            if {
+                                let ext: OsString = ext.to_ascii_lowercase();
+                                ext == lits::extensions::T
+                                    || ext == lits::extensions::H
+                                    || ext == lits::extensions::C
+                                    || ext == lits::extensions::CPP
+                                    || ext == lits::extensions::CPP2
+                            } =>
                         {
                             scripts.push(path);
                         }

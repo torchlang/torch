@@ -21,7 +21,8 @@ pub fn parser(script: &mut Script, diagnosis: &mut Diagnosis<'_>, parent_expr: &
 
             // Illegal token.
         } else {
-            diagnosis.diagnosis("illegal token", token.pos, script);
+            //diagnosis.diagnosis("illegal token", token.pos, script);
         }
+        script.token(torchc_script::iter::Mode::Next(Feature::Code));
     }
 }

@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 torchc_lex = { path = "../torchc_lex" }
+torchc_lits = { path = "../torchc_lits" }
+async-std = "1.12.0"

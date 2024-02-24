@@ -1,6 +1,7 @@
 use async_std::{fs, path::PathBuf};
 use colored::Colorize;
 use std::panic;
+use torchc_cgen::{cgen, CGen};
 use torchc_diagnosis::Diagnosis;
 use torchc_hike::hike;
 use torchc_lits::lits;
@@ -18,7 +19,8 @@ async fn main() {
                 lits::COLON.bold(),
                 err
             );
-        } else if let Some(err) = panic_info.payload().downcast_ref::<String>() {
+        }
+        if let Some(err) = panic_info.payload().downcast_ref::<String>() {
             return eprintln!(
                 "{}{} {}",
                 lits::EPREFIX.red().bold(),
@@ -48,12 +50,30 @@ async fn main() {
     src.push(lits::std_resources::SRC);
     let scripts: Vec<PathBuf> = hike(&src, &cwd).await;
 
-    let mut path: PathBuf = src.clone().to_path_buf();
-    path.push("main.t");
+    let mut dot_target: PathBuf = cwd.clone();
+    dot_target.push(lits::std_resources::DOT_TARGET);
+    {
+        let mut path: PathBuf = src.clone();
+        path.push("main.t");
 
-    let content: String = fs::read_to_string(&path).await.unwrap();
+        let content: String = fs::read_to_string(&path).await.unwrap();
 
-    let mut script: Script = content.as_script();
-    let mut diagnosis: Diagnosis = Diagnosis::new(&path, &cwd);
-    parser(&mut script, &mut diagnosis);
+        let mut script: Script = content.as_script();
+        let mut diagnosis: Diagnosis = Diagnosis::new(&path, &cwd);
+        let mut expr: cgen::Expr = cgen::Expr::Global(None);
+        parser(&mut script, &mut diagnosis, &mut expr);
+
+        let mut i: usize = 0;
+        CGen::new(
+            match expr {
+                cgen::Expr::Global(global) => match global {
+                    Some(program) => program,
+                    None => vec![],
+                },
+                _ => vec![],
+            },
+            &dot_target,
+        )
+        .cgen(&path, &mut i);
+    }
 }
