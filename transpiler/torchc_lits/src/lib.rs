@@ -4,6 +4,7 @@ use core::fmt;
 pub mod lits {
     pub const EPREFIX: &str = "error";
     pub const COLON: &str = ":";
+    pub const DOT: &str = ".";
     pub const CURRENT: &str = "current";
 
     pub mod extensions {
@@ -21,8 +22,14 @@ pub mod lits {
     pub mod std_resources {
         /// Folder name for the code in the language.
         pub const SRC: &str = "src";
-        /// Compilation hidden folder name.
-        pub const DOT_TARGET: &str = ".target";
+
+        /// Hidden compilation folder.
+        pub mod dot_target {
+            /// Compilation hidden folder name.
+            pub const NAME: &str = ".target";
+            /// Folder name for the development compilation.
+            pub const DEV: &str = "dev";
+        }
     }
 
     /// Token table literals.

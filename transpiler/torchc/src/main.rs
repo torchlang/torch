@@ -51,7 +51,7 @@ async fn main() {
     let scripts: Vec<PathBuf> = hike(&src, &cwd).await;
 
     let mut dot_target: PathBuf = cwd.clone();
-    dot_target.push(lits::std_resources::DOT_TARGET);
+    dot_target.push(lits::std_resources::dot_target::NAME);
     {
         let mut path: PathBuf = src.clone();
         path.push("main.t");
@@ -63,7 +63,6 @@ async fn main() {
         let mut expr: cgen::Expr = cgen::Expr::Global(None);
         parser(&mut script, &mut diagnosis, &mut expr);
 
-        let mut i: usize = 0;
         CGen::new(
             match expr {
                 cgen::Expr::Global(global) => match global {
@@ -74,6 +73,7 @@ async fn main() {
             },
             &dot_target,
         )
-        .cgen(&path, &mut i);
+        .cgen(&path, cgen::Mode::Release)
+        .await;
     }
 }

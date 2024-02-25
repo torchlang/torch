@@ -1,6 +1,10 @@
-use async_std::path::{Path, PathBuf};
+use async_std::{
+    fs,
+    path::{Path, PathBuf},
+};
 use cgen::Global;
-use torchc_lits::{lits, Lit};
+use std::hash::{DefaultHasher, Hash, Hasher};
+use torchc_lits::lits;
 
 /// It performs the evaluations, optimizations and others; to later generate the
 /// C/C++ code of the script.
@@ -17,32 +21,37 @@ impl<'cgen> CGen<'cgen> {
         Self { script, dot_target }
     }
     /// Generate the C/C++ code of the script (_file-to-file_).
-    pub fn cgen(&self, script: &Path, i: &mut usize) {
-        let mut path: PathBuf = self.dot_target.to_path_buf();
-        {
-            let mut filename: String = match script.file_stem() {
-                Some(filename) => match filename.to_str() {
-                    Some(filename) => filename.to_string(),
-                    None => {
-                        *i += 1;
-                        i.to_string()
-                    }
-                },
-                None => {
-                    *i += 1;
-                    i.to_string()
-                }
-            };
-            filename.push_str(&(".".to_string() + lits::extensions::CPP));
-            path.push(filename);
+    pub async fn cgen(&self, script: &Path, mode: cgen::Mode) {
+        let mut dot_target: PathBuf = self.dot_target.to_path_buf();
+        if mode == cgen::Mode::Dev {
+            dot_target.push(lits::std_resources::dot_target::DEV);
         }
+        // `.../.target/` or `.../.target/dev/`
+        fs::create_dir_all(&dot_target)
+            .await
+            .unwrap_or_else(|err| panic!("{}", err));
+        dot_target.push({
+            let mut hasher: DefaultHasher = DefaultHasher::new();
+            script.hash(&mut hasher);
+            // `xxxxxxxxxxxxxxxxxxx.cpp`
+            &(hasher.finish().to_string() + lits::DOT + lits::extensions::CPP)
+        });
 
-        println!("({})", path.display());
+        println!("({})", dot_target.display());
     }
 }
 
 pub mod cgen {
     use torchc_lex::Token;
+
+    /// Transpilation mode.
+    #[derive(Debug, PartialEq)]
+    pub enum Mode {
+        /// Ready for production.
+        Release,
+        /// Debugging and/or testing.
+        Dev,
+    }
 
     /// Language expressions.
     #[derive(Debug)]
