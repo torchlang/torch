@@ -68,7 +68,7 @@ impl<'lit> fmt::Display for Lit<'lit> {
             Lit::Reserved(lit) => f.write_str(lit),
             Lit::NonReserved(lit) => match lit {
                 NonReserved::Primitive(lit) => f.write_str(&String::from_utf8_lossy(lit)),
-                NonReserved::Pseudo(lit) => f.write_str(lit),
+                NonReserved::Pseudo(lit) => f.write_str(&String::from_utf8_lossy(lit)),
             },
         }
     }
@@ -79,5 +79,5 @@ pub enum NonReserved<'non_reserved> {
     /// Non-modifiable primitives.
     Primitive(&'non_reserved Box<[u8]>),
     /// Temporary constructions according to the context.
-    Pseudo(String),
+    Pseudo(Box<[u8]>),
 }

@@ -97,7 +97,7 @@ impl Table {
                                 None => {}
                             }
                         }
-                        Lit::NonReserved(NonReserved::Pseudo(cmt))
+                        Lit::NonReserved(NonReserved::Pseudo(cmt.into_bytes().into_boxed_slice()))
                     } else {
                         Lit::Reserved(lits::token_table::CMT)
                     }
