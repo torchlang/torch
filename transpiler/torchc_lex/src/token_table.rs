@@ -89,14 +89,18 @@ impl Table {
             DivisionSym => Lit::Reserved(lits::token_table::DIVISION_SYMBOL),
             Cmt(opt) => match opt {
                 Some(tokens) => {
-                    let mut lit: String = String::from(lits::token_table::CMT);
-                    for token in tokens {
-                        lit.push_str(&match token.lit() {
-                            Some(lit) => format!("{}", lit),
-                            None => String::new(),
-                        })
+                    if !tokens.is_empty() {
+                        let mut cmt: String = String::from(lits::token_table::CMT);
+                        for token in tokens {
+                            match token.lit() {
+                                Some(lit) => cmt.push_str(&format!("{}", lit)),
+                                None => {}
+                            }
+                        }
+                        Lit::NonReserved(NonReserved::Pseudo(cmt))
+                    } else {
+                        Lit::Reserved(lits::token_table::CMT)
                     }
-                    Lit::NonReserved(NonReserved::Pseudo(lit))
                 }
                 None => Lit::Reserved(lits::token_table::CMT),
             },
