@@ -1,8 +1,9 @@
 use async_std::{
-    fs,
+    fs::File,
+    io::WriteExt,
     path::{Path, PathBuf},
 };
-use cgen::Global;
+use cgen::{Fn, Global};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use torchc_lits::lits;
 
@@ -14,30 +15,67 @@ use torchc_lits::lits;
 #[derive(Debug)]
 pub struct CGen<'cgen> {
     script: Vec<Global>,
-    dot_target: &'cgen Path,
+    target: &'cgen Path,
 }
 impl<'cgen> CGen<'cgen> {
-    pub fn new(script: Vec<Global>, dot_target: &'cgen Path) -> Self {
-        Self { script, dot_target }
+    pub fn new(script: Vec<Global>, target: &'cgen Path) -> Self {
+        Self { script, target }
     }
     /// Generate the C/C++ code of the script (_file-to-file_).
-    pub async fn cgen(&self, script: &Path, mode: cgen::Mode) {
-        let mut dot_target: PathBuf = self.dot_target.to_path_buf();
-        if mode == cgen::Mode::Dev {
-            dot_target.push(lits::std_resources::dot_target::DEV);
-        }
-        // `.../.target/` or `.../.target/dev/`
-        fs::create_dir_all(&dot_target)
-            .await
-            .unwrap_or_else(|err| panic!("{}", err));
-        dot_target.push({
+    pub async fn cgen(&self, script: &Path) {
+        let mut path: PathBuf = self.target.to_path_buf();
+        path.push({
             let mut hasher: DefaultHasher = DefaultHasher::new();
             script.hash(&mut hasher);
             // `xxxxxxxxxxxxxxxxxxx.cpp`
             &(hasher.finish().to_string() + lits::DOT + lits::extensions::CPP)
         });
+        let mut cpp: File = async_std::fs::File::create(&path)
+            .await
+            .unwrap_or_else(|err| panic!("{}", err));
 
-        println!("({})", dot_target.display());
+        for expr in &self.script {
+            match expr {
+                Global::Fn(fn_expr) => match fn_expr {
+                    Fn::FnStmt(opt) => match opt {
+                        Some(fn_stmt) => {
+                            let mut cpp_fn: String = String::new();
+
+                            match fn_stmt.name.lit() {
+                                Some(lit) => cpp_fn.push_str(&format!(" {}", lit)),
+                                None => {
+                                    cpp_fn.push(' ');
+                                    cpp_fn.push_str(lits::cgen::DEFAULT_ID);
+                                }
+                            }
+
+                            cpp.write_all(cpp_fn.as_bytes())
+                                .await
+                                .unwrap_or_else(|err| panic!("{}", err));
+                        }
+                        None => {}
+                    },
+                    Fn::ProtoFn(opt) => match opt {
+                        Some(protofn) => {
+                            let mut cpp_protofn: String = String::new();
+
+                            match protofn.name.lit() {
+                                Some(lit) => cpp_protofn.push_str(&format!(" {}", lit)),
+                                None => {
+                                    cpp_protofn.push(' ');
+                                    cpp_protofn.push_str(lits::cgen::DEFAULT_ID);
+                                }
+                            }
+
+                            cpp.write_all(cpp_protofn.as_bytes())
+                                .await
+                                .unwrap_or_else(|err| panic!("{}", err));
+                        }
+                        None => {}
+                    },
+                },
+            };
+        }
     }
 }
 
@@ -76,13 +114,23 @@ pub mod cgen {
     /// &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`...`
     #[derive(Debug)]
     pub struct FnStmt {
-        name: Token,
+        pub name: Token,
+    }
+    impl FnStmt {
+        pub fn new() -> Self {
+            Self { name: Token::new() }
+        }
     }
     /// **Prototype:**
     ///
     /// `extern <backend> fn name(var arg1 = type <lit>, arg2 = type <lit>, ...) var type <lit>, type <lit>, ...`
     #[derive(Debug)]
     pub struct ProtoFn {
-        name: Token,
+        pub name: Token,
+    }
+    impl ProtoFn {
+        pub fn new() -> Self {
+            Self { name: Token::new() }
+        }
     }
 }

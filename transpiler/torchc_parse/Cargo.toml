@@ -8,3 +8,5 @@ torchc_script = { path = "../torchc_script" }
 torchc_diagnosis = { path = "../torchc_diagnosis" }
 torchc_lex = { path = "../torchc_lex" }
 torchc_cgen = { path = "../torchc_cgen" }
+torchc_lits = { path = "../torchc_lits" }
+colored = "2.1.0"

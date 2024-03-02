@@ -22,6 +22,10 @@ impl Token {
     pub fn is(&self, cmp: &Table) -> bool {
         self.lexeme.is(cmp)
     }
+    /// Count the clean length of the token.
+    pub fn len(&self) -> usize {
+        self.lexeme.len()
+    }
     /// Obtain the token literal.
     pub fn lit(&self) -> Option<Lit> {
         self.lexeme.lit()

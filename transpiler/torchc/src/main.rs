@@ -50,8 +50,19 @@ async fn main() {
     src.push(lits::std_resources::SRC);
     let scripts: Vec<PathBuf> = hike(&src, &cwd).await;
 
+    let mode: cgen::Mode = cgen::Mode::Dev;
     let mut dot_target: PathBuf = cwd.clone();
-    dot_target.push(lits::std_resources::dot_target::NAME);
+    {
+        dot_target.push(lits::std_resources::dot_target::NAME);
+        if mode == cgen::Mode::Dev {
+            dot_target.push(lits::std_resources::dot_target::DEV);
+        }
+        // `.../.target/` or `.../.target/dev/`
+        fs::create_dir_all(&dot_target)
+            .await
+            .unwrap_or_else(|err| panic!("{}", err));
+    }
+
     {
         let mut path: PathBuf = src.clone();
         path.push("main.t");
@@ -73,7 +84,7 @@ async fn main() {
             },
             &dot_target,
         )
-        .cgen(&path, cgen::Mode::Release)
+        .cgen(&path)
         .await;
     }
 }

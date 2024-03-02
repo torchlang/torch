@@ -8,6 +8,8 @@ pub enum Table {
     Id(Option<Box<[u8]>>),
     /// `fn`
     Fn,
+    /// `extern`
+    Extern,
     /// `"..."`
     StringLit(Option<Box<[u8]>>),
     /// `'...'`
@@ -36,6 +38,10 @@ impl Table {
             },
             Fn => match cmp {
                 Fn => true,
+                _ => false,
+            },
+            Extern => match cmp {
+                Extern => true,
                 _ => false,
             },
             EndOfStmt => match cmp {
@@ -77,6 +83,7 @@ impl Table {
                 None => return None,
             },
             Fn => Lit::Reserved(lits::token_table::FN),
+            Extern => Lit::Reserved(lits::token_table::EXTERN),
             Whitespace => Lit::Reserved(lits::token_table::SPACE),
             EndOfStmt => Lit::Reserved(lits::token_table::SEMICOLON_SYMBOL),
             DivisionSym => Lit::Reserved(lits::token_table::DIVISION_SYMBOL),
@@ -94,5 +101,12 @@ impl Table {
                 None => Lit::Reserved(lits::token_table::CMT),
             },
         })
+    }
+    /// Count the clean length of the token.
+    pub fn len(&self) -> usize {
+        match self.lit() {
+            Some(lit) => format!("{}", lit).len(),
+            None => 0,
+        }
     }
 }

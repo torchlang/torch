@@ -1,3 +1,5 @@
+use torchc_lits::lits;
+
 use super::{Script, Table, Token};
 
 /// Get the following token from the script.
@@ -65,7 +67,13 @@ pub fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                         _ => break,
                     }
                 }
-                token.lexeme = Table::Id(Some(lit.into_bytes().into_boxed_slice()));
+
+                // Keyword or identifier.
+                token.lexeme = match lit.as_str() {
+                    lits::token_table::FN => Table::Fn,
+                    lits::token_table::EXTERN => Table::Extern,
+                    _ => Table::Id(Some(lit.into_bytes().into_boxed_slice())),
+                };
             }
 
             // String literal.
