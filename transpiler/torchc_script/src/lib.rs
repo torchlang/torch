@@ -44,11 +44,8 @@ impl Script {
             i += 1;
             match mode {
                 Peek(ft) | Next(ft) => {
-                    match mode {
-                        Next(_) => {
-                            self.i += 1;
-                        }
-                        Peek(_) => {}
+                    if let Next(_) = mode {
+                        self.i += 1;
                     }
 
                     if ft == Feature::Code

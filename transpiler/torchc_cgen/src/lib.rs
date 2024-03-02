@@ -37,8 +37,8 @@ impl<'cgen> CGen<'cgen> {
         for expr in &self.script {
             match expr {
                 Global::Fn(fn_expr) => match fn_expr {
-                    Fn::FnStmt(opt) => match opt {
-                        Some(fn_stmt) => {
+                    Fn::FnStmt(opt) => {
+                        if let Some(fn_stmt) = opt {
                             let mut cpp_fn: String = String::new();
 
                             match fn_stmt.name.lit() {
@@ -53,10 +53,9 @@ impl<'cgen> CGen<'cgen> {
                                 .await
                                 .unwrap_or_else(|err| panic!("{}", err));
                         }
-                        None => {}
-                    },
-                    Fn::ProtoFn(opt) => match opt {
-                        Some(protofn) => {
+                    }
+                    Fn::ProtoFn(opt) => {
+                        if let Some(protofn) = opt {
                             let mut cpp_protofn: String = String::new();
 
                             match protofn.name.lit() {
@@ -71,8 +70,7 @@ impl<'cgen> CGen<'cgen> {
                                 .await
                                 .unwrap_or_else(|err| panic!("{}", err));
                         }
-                        None => {}
-                    },
+                    }
                 },
             };
         }

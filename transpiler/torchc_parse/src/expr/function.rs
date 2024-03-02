@@ -71,21 +71,10 @@ pub fn function(
     }
 
     // Save cgen data.
-    match parent_expr {
-        cgen::Expr::Fn(_) => global.push(cgen::Global::Fn(match kind {
+    if let cgen::Expr::Fn(_) = parent_expr {
+        global.push(cgen::Global::Fn(match kind {
             cgen::Fn::FnStmt(_) => cgen::Fn::FnStmt(Some(fn_stmt)),
             cgen::Fn::ProtoFn(_) => cgen::Fn::ProtoFn(Some(protofn)),
-        })),
-        _ => {
-            #[cfg(debug_assertions)]
-            panic!(
-                "illegal expression in {}{}{}",
-                "match parent_expr { ".bold(),
-                "cgen::Expr::Option => {}".red().bold(),
-                " }".bold()
-            );
-            #[cfg(not(debug_assertions))]
-            panic!();
-        }
+        }));
     }
 }
