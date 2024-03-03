@@ -72,7 +72,7 @@ async fn main() {
         let mut script: Script = content.as_script();
         let mut diagnosis: Diagnosis = Diagnosis::new(&path, &cwd);
         let mut expr: cgen::Expr = cgen::Expr::Global(None);
-        parser(&mut script, &mut diagnosis, &mut expr);
+        expr = parser(&mut script, &mut diagnosis, &expr);
 
         CGen::new(
             match expr {

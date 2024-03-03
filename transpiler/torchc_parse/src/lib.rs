@@ -12,15 +12,20 @@ mod expr;
 ///
 /// ---
 /// _**Syntactic Analyzer**_
-pub fn parser(script: &mut Script, diagnosis: &mut Diagnosis<'_>, parent_expr: &mut cgen::Expr) {
-    let mut global: Vec<cgen::Global> = vec![];
+pub fn parser(
+    script: &mut Script,
+    diagnosis: &mut Diagnosis<'_>,
+    parent_expr: &cgen::Expr,
+) -> cgen::Expr {
+    let mut exprs: Vec<cgen::Expr> = vec![];
 
     while let Some(token) = script.token(Peek(Feature::Code)) {
         // Function expression (statement or prototype).
         if token.is(&Table::Fn) {
-            let mut fn_expr: cgen::Expr = cgen::Expr::Fn(None);
-            let mut fn_stmt: cgen::Fn = cgen::Fn::FnStmt(None);
-            expr::function(script, diagnosis, &mut fn_expr, &mut fn_stmt, &mut global);
+            let fn_expr: cgen::Expr = cgen::Expr::Fn(None);
+            if let cgen::Expr::Global(_) = parent_expr {
+                exprs.push(expr::function(script, diagnosis, &fn_expr));
+            }
 
             // Illegal token.
         } else {
@@ -28,9 +33,9 @@ pub fn parser(script: &mut Script, diagnosis: &mut Diagnosis<'_>, parent_expr: &
         }
     }
 
-    // Save cgen data.
-    match parent_expr {
-        cgen::Expr::Global(_) => *parent_expr = cgen::Expr::Global(Some(global)),
-        cgen::Expr::Fn(_) => {}
+    if let cgen::Expr::Global(_) = parent_expr {
+        cgen::Expr::Global(Some(exprs))
+    } else {
+        cgen::Expr::Global(None)
     }
 }

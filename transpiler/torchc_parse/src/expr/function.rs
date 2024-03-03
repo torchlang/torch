@@ -1,4 +1,4 @@
-use colored::Colorize;
+use crate::parser;
 use torchc_cgen::cgen;
 use torchc_diagnosis::Diagnosis;
 use torchc_lex::{Pos, Table};
@@ -15,12 +15,10 @@ use torchc_script::{
 pub fn function(
     script: &mut Script,
     diagnosis: &mut Diagnosis<'_>,
-    parent_expr: &mut cgen::Expr,
-    kind: &mut cgen::Fn,
-    global: &mut Vec<cgen::Global>,
-) {
-    let mut fn_stmt: cgen::FnStmt = cgen::FnStmt::new();
-    let mut protofn: cgen::ProtoFn = cgen::ProtoFn::new();
+    expr: &cgen::Expr,
+) -> cgen::Expr {
+    let mut fn_expr: cgen::Fn = cgen::Fn::new();
+    let mut indent: usize = 0;
     let mut pos: Pos = Pos::default();
 
     // `fn name(var arg1 = type <lit>, arg2 = type <lit>, ...) var type <lit>, type <lit>, ...`
@@ -28,6 +26,7 @@ pub fn function(
     match script.token(Peek(Feature::Code)) {
         Some(token) => {
             if token.is(&Table::Fn) {
+                indent = token.pos.grapheme;
                 pos = token.pos;
                 pos.grapheme += token.len() + 1; // `+1` == space
                 script.token(Next(Feature::Code)).unwrap();
@@ -39,7 +38,7 @@ pub fn function(
                 );
             }
         }
-        None => return,
+        None => return cgen::Expr::Fn(None),
     }
 
     // `fn name(var arg1 = type <lit>, arg2 = type <lit>, ...) var type <lit>, type <lit>, ...`
@@ -49,10 +48,7 @@ pub fn function(
             if token.is(&Table::Id(None)) {
                 pos = token.pos;
                 pos.grapheme += token.len();
-                match kind {
-                    cgen::Fn::FnStmt(_) => fn_stmt.name = token.clone(),
-                    cgen::Fn::ProtoFn(_) => protofn.name = token.clone(),
-                }
+                fn_expr.name = token.clone();
                 script.token(Next(Feature::Code)).unwrap();
             } else {
                 diagnosis.diagnosis("illegal function name", token.pos, script);
@@ -70,11 +66,22 @@ pub fn function(
         _ => diagnosis.diagnosis("expecting newline", pos, script),
     }
 
-    // Save cgen data.
-    if let cgen::Expr::Fn(_) = parent_expr {
-        global.push(cgen::Global::Fn(match kind {
-            cgen::Fn::FnStmt(_) => cgen::Fn::FnStmt(Some(fn_stmt)),
-            cgen::Fn::ProtoFn(_) => cgen::Fn::ProtoFn(Some(protofn)),
-        }));
+    // Recursive indentation.
+    while let Some(token) = script.token(Peek(Feature::Code)) {
+        if token.pos.grapheme <= indent {
+            break;
+        }
+
+        if token.is(&Table::Fn) {
+            diagnosis.diagnosis("illegal indentation", token.pos, script);
+        } else {
+            fn_expr.body.push(parser(script, diagnosis, expr));
+        }
     }
+
+    cgen::Expr::Fn(if let cgen::Expr::Fn(_) = expr {
+        Some(fn_expr)
+    } else {
+        None
+    })
 }

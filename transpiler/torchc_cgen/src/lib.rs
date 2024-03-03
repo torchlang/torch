@@ -3,7 +3,7 @@ use async_std::{
     io::WriteExt,
     path::{Path, PathBuf},
 };
-use cgen::{Fn, Global};
+use cgen::Expr;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use torchc_lits::lits;
 
@@ -14,11 +14,11 @@ use torchc_lits::lits;
 /// _**Code Generator**_
 #[derive(Debug)]
 pub struct CGen<'cgen> {
-    script: Vec<Global>,
+    script: Vec<Expr>,
     target: &'cgen Path,
 }
 impl<'cgen> CGen<'cgen> {
-    pub fn new(script: Vec<Global>, target: &'cgen Path) -> Self {
+    pub fn new(script: Vec<Expr>, target: &'cgen Path) -> Self {
         Self { script, target }
     }
     /// Generate the C/C++ code of the script (_file-to-file_).
@@ -36,49 +36,24 @@ impl<'cgen> CGen<'cgen> {
 
         for expr in &self.script {
             match expr {
-                Global::Fn(fn_expr) => match fn_expr {
-                    Fn::FnStmt(opt) => {
-                        if let Some(fn_stmt) = opt {
-                            let mut cpp_fn: String = String::new();
-
-                            match fn_stmt.name.lit() {
-                                Some(lit) => cpp_fn.push_str(&format!(" {}", lit)),
-                                None => {
-                                    cpp_fn.push(' ');
-                                    cpp_fn.push_str(lits::cgen::DEFAULT_ID);
-                                }
-                            }
-
-                            cpp.write_all(cpp_fn.as_bytes())
-                                .await
-                                .unwrap_or_else(|err| panic!("{}", err));
-                        }
+                Expr::Fn(opt) => {
+                    if let Some(fn_expr) = opt {
+                        let mut cpp_fn: String = String::new();
+                        fn_expr.cgen(&mut cpp_fn);
+                        cpp.write_all(cpp_fn.as_bytes())
+                            .await
+                            .unwrap_or_else(|err| panic!("{}", err));
                     }
-                    Fn::ProtoFn(opt) => {
-                        if let Some(protofn) = opt {
-                            let mut cpp_protofn: String = String::new();
-
-                            match protofn.name.lit() {
-                                Some(lit) => cpp_protofn.push_str(&format!(" {}", lit)),
-                                None => {
-                                    cpp_protofn.push(' ');
-                                    cpp_protofn.push_str(lits::cgen::DEFAULT_ID);
-                                }
-                            }
-
-                            cpp.write_all(cpp_protofn.as_bytes())
-                                .await
-                                .unwrap_or_else(|err| panic!("{}", err));
-                        }
-                    }
-                },
-            };
+                }
+                Expr::Global(_) => {}
+            }
         }
     }
 }
 
 pub mod cgen {
     use torchc_lex::Token;
+    use torchc_lits::lits;
 
     /// Transpilation mode.
     #[derive(Debug, PartialEq)]
@@ -92,43 +67,51 @@ pub mod cgen {
     /// Language expressions.
     #[derive(Debug)]
     pub enum Expr {
-        Global(Option<Vec<Global>>),
+        Global(Option<Vec<Expr>>),
         Fn(Option<Fn>),
     }
 
-    #[derive(Debug)]
-    pub enum Global {
-        Fn(Fn),
-    }
-
-    #[derive(Debug)]
-    pub enum Fn {
-        FnStmt(Option<FnStmt>),
-        ProtoFn(Option<ProtoFn>),
-    }
     /// **Statement:**
     ///
     /// `fn name(var arg1 = type <lit>, arg2 = type <lit>, ...) var type <lit>, type <lit>, ...`<br>
     /// &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`...`
     #[derive(Debug)]
-    pub struct FnStmt {
+    pub struct Fn {
         pub name: Token,
+        pub body: Vec<Expr>,
     }
-    impl FnStmt {
+    impl Fn {
         pub fn new() -> Self {
-            Self { name: Token::new() }
+            Self {
+                name: Token::new(),
+                body: vec![],
+            }
         }
-    }
-    /// **Prototype:**
-    ///
-    /// `extern <backend> fn name(var arg1 = type <lit>, arg2 = type <lit>, ...) var type <lit>, type <lit>, ...`
-    #[derive(Debug)]
-    pub struct ProtoFn {
-        pub name: Token,
-    }
-    impl ProtoFn {
-        pub fn new() -> Self {
-            Self { name: Token::new() }
+        /// Generate C/C++ function code.
+        pub fn cgen(&self, cpp_fn: &mut String) {
+            // Function name.
+            match self.name.lit() {
+                Some(lit) => cpp_fn.push_str(&format!(" {}", lit)),
+                None => {
+                    cpp_fn.push(' ');
+                    cpp_fn.push_str(lits::cgen::DEFAULT_ID);
+                }
+            }
+
+            // Function body.
+            cpp_fn.push('{');
+            for expr in &self.body {
+                match expr {
+                    Expr::Fn(opt) => match opt {
+                        Some(fn_expr) => {
+                            fn_expr.cgen(cpp_fn);
+                        }
+                        None => {}
+                    },
+                    Expr::Global(_) => {}
+                }
+            }
+            cpp_fn.push('}');
         }
     }
 }
