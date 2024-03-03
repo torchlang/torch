@@ -17,14 +17,14 @@ pub fn parser(
     diagnosis: &mut Diagnosis<'_>,
     parent_expr: &cgen::Expr,
 ) -> cgen::Expr {
-    let mut exprs: Vec<cgen::Expr> = vec![];
+    let mut globals: Vec<cgen::Expr> = vec![];
 
     while let Some(token) = script.token(Peek(Feature::Code)) {
         // Function expression (statement or prototype).
         if token.is(&Table::Fn) {
             let fn_expr: cgen::Expr = cgen::Expr::Fn(None);
             if let cgen::Expr::Global(_) = parent_expr {
-                exprs.push(expr::function(script, diagnosis, &fn_expr));
+                globals.push(expr::function(script, diagnosis, &fn_expr));
             }
 
             // Illegal token.
@@ -34,7 +34,7 @@ pub fn parser(
     }
 
     if let cgen::Expr::Global(_) = parent_expr {
-        cgen::Expr::Global(Some(exprs))
+        cgen::Expr::Global(Some(globals))
     } else {
         cgen::Expr::Global(None)
     }

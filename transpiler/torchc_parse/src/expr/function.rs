@@ -72,11 +72,12 @@ pub fn function(
             break;
         }
 
+        // Verify valid expressions within the function.
         if token.is(&Table::Fn) {
             diagnosis.diagnosis("illegal indentation", token.pos, script);
-        } else {
-            fn_expr.body.push(parser(script, diagnosis, expr));
         }
+
+        fn_expr.body.push(parser(script, diagnosis, expr));
     }
 
     cgen::Expr::Fn(if let cgen::Expr::Fn(_) = expr {
