@@ -3,7 +3,7 @@ use async_std::{
     io::WriteExt,
     path::{Path, PathBuf},
 };
-use cgen::Expr;
+use cgen::Stmt;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use torchc_lits::lits;
 
@@ -14,11 +14,11 @@ use torchc_lits::lits;
 /// _**Code Generator**_
 #[derive(Debug)]
 pub struct CGen<'cgen> {
-    script: Vec<Expr>,
+    script: Vec<Stmt>,
     target: &'cgen Path,
 }
 impl<'cgen> CGen<'cgen> {
-    pub fn new(script: Vec<Expr>, target: &'cgen Path) -> Self {
+    pub fn new(script: Vec<Stmt>, target: &'cgen Path) -> Self {
         Self { script, target }
     }
     /// Generate the C/C++ code of the script (_file-to-file_).
@@ -34,18 +34,18 @@ impl<'cgen> CGen<'cgen> {
             .await
             .unwrap_or_else(|err| panic!("{}", err));
 
-        for expr in &self.script {
-            match expr {
-                Expr::Fn(opt) => {
-                    if let Some(fn_expr) = opt {
+        for stmt in &self.script {
+            match stmt {
+                Stmt::Fn(opt) => {
+                    if let Some(fn_stmt) = opt {
                         let mut cpp_fn: String = String::new();
-                        fn_expr.cgen(&mut cpp_fn);
+                        fn_stmt.cgen(&mut cpp_fn);
                         cpp.write_all(cpp_fn.as_bytes())
                             .await
                             .unwrap_or_else(|err| panic!("{}", err));
                     }
                 }
-                Expr::Global(_) => {}
+                Stmt::Global(_) => {}
             }
         }
     }
@@ -64,10 +64,10 @@ pub mod cgen {
         Dev,
     }
 
-    /// Language expressions.
+    /// Language statements.
     #[derive(Debug)]
-    pub enum Expr {
-        Global(Option<Vec<Expr>>),
+    pub enum Stmt {
+        Global(Option<Vec<Self>>),
         Fn(Option<Fn>),
     }
 
@@ -78,7 +78,7 @@ pub mod cgen {
     #[derive(Debug)]
     pub struct Fn {
         pub name: Token,
-        pub body: Vec<Expr>,
+        pub body: Vec<Stmt>,
     }
     impl Fn {
         pub fn new() -> Self {
@@ -100,15 +100,15 @@ pub mod cgen {
 
             // Function body.
             cpp_fn.push('{');
-            for expr in &self.body {
-                match expr {
-                    Expr::Fn(opt) => match opt {
-                        Some(fn_expr) => {
-                            fn_expr.cgen(cpp_fn);
+            for stmt in &self.body {
+                match stmt {
+                    Stmt::Fn(opt) => match opt {
+                        Some(fn_stmt) => {
+                            fn_stmt.cgen(cpp_fn);
                         }
                         None => {}
                     },
-                    Expr::Global(_) => {}
+                    Stmt::Global(_) => {}
                 }
             }
             cpp_fn.push('}');

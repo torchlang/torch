@@ -15,15 +15,18 @@ mod expr;
 pub fn parser(
     script: &mut Script,
     diagnosis: &mut Diagnosis<'_>,
-    parent_expr: &cgen::Expr,
-) -> cgen::Expr {
-    let mut globals: Vec<cgen::Expr> = vec![];
+    parent_stmt: &cgen::Stmt,
+) -> cgen::Stmt {
+    let mut globals: Vec<cgen::Stmt> = vec![];
 
+    // Child scope.
+    //  - The statement without indentation is added in `globals` and
+    //    with indentation it is returned (`return cgen::Stmt`).
     while let Some(token) = script.token(Peek(Feature::Code)) {
-        // Function expression (statement or prototype).
+        // Function statement.
         if token.is(&Table::Fn) {
-            let fn_expr: cgen::Expr = cgen::Expr::Fn(None);
-            if let cgen::Expr::Global(_) = parent_expr {
+            let fn_expr: cgen::Stmt = cgen::Stmt::Fn(None);
+            if let cgen::Stmt::Global(_) = parent_stmt {
                 globals.push(expr::function(script, diagnosis, &fn_expr));
             }
 
@@ -33,9 +36,11 @@ pub fn parser(
         }
     }
 
-    if let cgen::Expr::Global(_) = parent_expr {
-        cgen::Expr::Global(Some(globals))
+    // Global scope.
+    let parent_expr = cgen::Stmt::Fn(None);
+    if let cgen::Stmt::Global(_) = parent_expr {
+        cgen::Stmt::Global(Some(globals))
     } else {
-        cgen::Expr::Global(None)
+        cgen::Stmt::Global(None)
     }
 }

@@ -1,3 +1,4 @@
+use super::IllegalIndentAccordingTo;
 use crate::parser;
 use torchc_cgen::cgen;
 use torchc_diagnosis::Diagnosis;
@@ -11,13 +12,13 @@ use torchc_script::{
     Script,
 };
 
-/// It recursively parses the function expression and obtains the _**cgen data**_.
+/// It recursively parses the function statement and obtains the _**cgen data**_.
 pub fn function(
     script: &mut Script,
     diagnosis: &mut Diagnosis<'_>,
-    expr: &cgen::Expr,
-) -> cgen::Expr {
-    let mut fn_expr: cgen::Fn = cgen::Fn::new();
+    stmt: &cgen::Stmt,
+) -> cgen::Stmt {
+    let mut fn_stmt: cgen::Fn = cgen::Fn::new();
     let mut indent: usize = 0;
     let mut pos: Pos = Pos::default();
 
@@ -38,7 +39,7 @@ pub fn function(
                 );
             }
         }
-        None => return cgen::Expr::Fn(None),
+        None => return cgen::Stmt::Fn(None),
     }
 
     // `fn name(var arg1 = type <lit>, arg2 = type <lit>, ...) var type <lit>, type <lit>, ...`
@@ -48,7 +49,7 @@ pub fn function(
             if token.is(&Table::Id(None)) {
                 pos = token.pos;
                 pos.grapheme += token.len();
-                fn_expr.name = token.clone();
+                fn_stmt.name = token.clone();
                 script.token(Next(Feature::Code)).unwrap();
             } else {
                 diagnosis.diagnosis("illegal function name", token.pos, script);
@@ -72,16 +73,22 @@ pub fn function(
             break;
         }
 
-        // Verify valid expressions within the function.
+        // Checks for valid statements within the function.
         if token.is(&Table::Fn) {
-            diagnosis.diagnosis("illegal indentation", token.pos, script);
+            diagnosis.diagnosis(
+                "illegal indentation"
+                    .to_string()
+                    .illegal_indent_according_to(stmt, &cgen::Stmt::Fn(None)),
+                token.pos,
+                script,
+            );
         }
 
-        fn_expr.body.push(parser(script, diagnosis, expr));
+        fn_stmt.body.push(parser(script, diagnosis, stmt));
     }
 
-    cgen::Expr::Fn(if let cgen::Expr::Fn(_) = expr {
-        Some(fn_expr)
+    cgen::Stmt::Fn(if let cgen::Stmt::Fn(_) = stmt {
+        Some(fn_stmt)
     } else {
         None
     })

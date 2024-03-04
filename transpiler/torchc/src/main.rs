@@ -71,12 +71,12 @@ async fn main() {
 
         let mut script: Script = content.as_script();
         let mut diagnosis: Diagnosis = Diagnosis::new(&path, &cwd);
-        let mut expr: cgen::Expr = cgen::Expr::Global(None);
+        let mut expr: cgen::Stmt = cgen::Stmt::Global(None);
         expr = parser(&mut script, &mut diagnosis, &expr);
 
         CGen::new(
             match expr {
-                cgen::Expr::Global(global) => match global {
+                cgen::Stmt::Global(global) => match global {
                     Some(program) => program,
                     None => vec![],
                 },
