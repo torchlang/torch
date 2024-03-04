@@ -89,6 +89,8 @@ impl AsScript for String {
         // Retokenizer.
 
         let mut tokens: Vec<Token> = vec![];
+        let mut end_of_multiline_cmt_with_newline: bool = false;
+        let mut end_of_stmt: Token = Token::new();
 
         while let Some(token) = script.token(Next(Feature::Default)) {
             let mut token: Token = token.clone();
@@ -100,16 +102,22 @@ impl AsScript for String {
 
                 // Comment content.
                 while let Some(token) = script.token(Next(Feature::Default)) {
+                    // Merges all comment tokens, including newlines,
+                    // this is for code formatting.
+                    cmt.push(token.clone());
+
                     if token.is(&Table::EndOfStmt) {
+                        end_of_stmt = token.clone();
+
                         // Multiline commentary based on indentation.
                         if let Some(token) = script.token(Peek(Feature::CodeAndCmts)) {
                             if token.pos.grapheme > indent {
                                 continue;
                             }
                         }
+                        end_of_multiline_cmt_with_newline = true;
                         break;
                     }
-                    cmt.push(token.clone());
                 }
 
                 // It is `Some(_)` only if content exists.
@@ -118,6 +126,10 @@ impl AsScript for String {
                 }
             }
             tokens.push(token);
+            if end_of_multiline_cmt_with_newline {
+                tokens.push(end_of_stmt.clone());
+                end_of_multiline_cmt_with_newline = false;
+            }
         }
 
         Script { tokens, i: 0 }

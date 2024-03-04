@@ -1,4 +1,5 @@
 use async_std::{fs, path::PathBuf};
+use colored::Colorize;
 use torchc_cgen::{cgen, CGen};
 use torchc_cli::Cli;
 use torchc_diagnosis::panic;
@@ -26,7 +27,17 @@ async fn main() {
     };
     let mut src: PathBuf = cwd.clone();
     src.push(lits::std_resources::SRC);
-    let scripts: Vec<PathBuf> = hike(&src, &cwd).await;
+    if !src.exists().await {
+        panic!(
+            "the {} folder does not exist in the {} directory",
+            lits::std_resources::SRC.red().bold(),
+            match cwd.to_str() {
+                Some(cwd) => cwd.bold(),
+                None => lits::CURRENT.normal(),
+            }
+        );
+    }
+    let scripts: Vec<PathBuf> = hike(&src).await;
 
     let mode: cgen::Mode = cgen::Mode::Dev;
     let mut dot_target: PathBuf = cwd.clone();

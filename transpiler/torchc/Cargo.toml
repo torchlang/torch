@@ -16,3 +16,4 @@ torchc_diagnosis = { path = "../torchc_diagnosis" }
 torchc_hike = { path = "../torchc_hike" }
 torchc_cgen = { path = "../torchc_cgen" }
 torchc_cli = { path = "../torchc_cli" }
+colored = "2.1.0"

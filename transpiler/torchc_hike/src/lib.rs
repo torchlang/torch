@@ -9,18 +9,7 @@ use torchc_lits::lits;
 
 /// Scans the `src/` directory within the current working directory (`cwd`) for
 /// `.t`, `.c` and/or `.cpp` files.
-pub async fn hike(src: &Path, cwd: &Path) -> Vec<PathBuf> {
-    if !src.exists().await {
-        panic!(
-            "the {} folder does not exist in the {} directory",
-            lits::std_resources::SRC.red().bold(),
-            match cwd.to_str() {
-                Some(cwd) => cwd.bold(),
-                None => lits::CURRENT.normal(),
-            }
-        );
-    }
-
+pub async fn hike(src: &Path) -> Vec<PathBuf> {
     let mut scripts: Vec<PathBuf> = vec![];
     let mut entries: WalkDir = WalkDir::new(&src);
     loop {

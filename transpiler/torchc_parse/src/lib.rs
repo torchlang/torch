@@ -2,7 +2,10 @@ use torchc_cgen::cgen;
 use torchc_diagnosis::panic;
 use torchc_lex::Table;
 use torchc_script::{
-    iter::{Feature, Mode::Peek},
+    iter::{
+        Feature,
+        Mode::{Next, Peek},
+    },
     Script,
 };
 
@@ -23,6 +26,14 @@ pub fn parser(
     //  - The statement without indentation is added in `globals` and
     //    with indentation it is returned (`return cgen::Stmt`).
     while let Some(token) = script.token(Peek(Feature::Code)) {
+        // Skip tokens such as:
+        //  - The ends of empty statements (the `EndOfStmt` are automatically added
+        //    from newlines).
+        if token.is(&Table::EndOfStmt) {
+            script.token(Next(Feature::Code));
+            continue;
+        }
+
         // Function statement.
         if token.is(&Table::Fn) {
             let fn_stmt: cgen::Stmt = cgen::Stmt::Fn(None);

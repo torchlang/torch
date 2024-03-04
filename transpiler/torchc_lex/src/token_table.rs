@@ -85,8 +85,11 @@ impl Table {
                     if !tokens.is_empty() {
                         let mut cmt: String = String::from(lits::token_table::CMT);
                         for token in tokens {
-                            if let Some(lit) = token.lit() {
-                                cmt.push_str(&format!("{}", lit));
+                            // Merge all comment tokens except newlines for the literal.
+                            if !token.is(&Table::EndOfStmt) {
+                                if let Some(lit) = token.lit() {
+                                    cmt.push_str(&format!("{}", lit));
+                                }
                             }
                         }
                         Lit::NonReserved(NonReserved::Pseudo(cmt.into_bytes().into_boxed_slice()))
