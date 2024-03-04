@@ -6,7 +6,7 @@ use torchc_script::{
     Script,
 };
 
-mod expr;
+mod stmt;
 
 /// Parse the syntax of the script and obtain the _**cgen data**_.
 ///
@@ -27,7 +27,7 @@ pub fn parser(
         if token.is(&Table::Fn) {
             let fn_expr: cgen::Stmt = cgen::Stmt::Fn(None);
             if let cgen::Stmt::Global(_) = parent_stmt {
-                globals.push(expr::function(script, diagnosis, &fn_expr));
+                globals.push(stmt::function(script, diagnosis, &fn_expr));
             }
 
             // Illegal token.
