@@ -48,7 +48,6 @@ pub mod lits {
         /// Commentator's literal.
         pub const CMT: &str = "//";
         pub const FN: &str = "fn";
-        pub const EXTERN: &str = "extern";
     }
     /// Literals for C/C++ code generation.
     pub mod cgen {

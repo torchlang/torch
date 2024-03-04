@@ -1,6 +1,7 @@
 pub use crate::{lex::lexer, token_table::Table};
 use std::{iter::Peekable, str::Chars};
 use torchc_lits::Lit;
+use unicode_segmentation::UnicodeSegmentation;
 
 mod lex;
 mod token_table;
@@ -72,6 +73,20 @@ impl<'script> Script<'script> {
     pub fn next_char(&mut self) -> Option<char> {
         match self.buf.next() {
             Some(c) => Some(self.pos.advance(c)),
+            None => None,
+        }
+    }
+    /// Gets the next grapheme from the script.
+    pub fn next_grapheme(&mut self) -> Option<Box<[u8]>> {
+        match self.buf.clone().collect::<String>().graphemes(true).next() {
+            Some(grapheme) => {
+                // Advance the script position (no newlines are expected).
+                for c in grapheme.chars() {
+                    self.buf.next();
+                    self.pos.advance(c);
+                }
+                Some(grapheme.as_bytes().into())
+            }
             None => None,
         }
     }

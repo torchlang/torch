@@ -5,3 +5,4 @@ edition = "2021"
 
 [dependencies]
 torchc_lits = { path = "../torchc_lits" }
+unicode-segmentation = "1.11.0"

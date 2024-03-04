@@ -71,7 +71,6 @@ pub fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
                 // Keyword or identifier.
                 token.lexeme = match lit.as_str() {
                     lits::token_table::FN => Table::Fn,
-                    lits::token_table::EXTERN => Table::Extern,
                     _ => Table::Id(Some(lit.into_bytes().into_boxed_slice())),
                 };
             }
@@ -124,15 +123,15 @@ pub fn lexer<'lexer>(script: &mut Script<'lexer>) -> Option<Token> {
 
             // Illegal token.
             _ => {
-                token.lexeme = Table::Illegal(Some(
-                    script
-                        .next_char()
-                        .unwrap()
-                        .to_string()
-                        .into_bytes()
-                        .into_boxed_slice(),
-                ));
+                // Advance the position counter (without advancing the iteration of
+                // the script) and save the position before getting the grapheme since
+                // doing it later could misalign it because it could advance more than
+                // 2 positions.
+                let c: char = *c;
                 token.pos = script.pos;
+                token.pos.advance(c);
+
+                token.lexeme = Table::Illegal(Some(script.next_grapheme().unwrap()));
             }
         }
         return Some(token);
