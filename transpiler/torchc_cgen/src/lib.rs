@@ -57,6 +57,7 @@ pub mod cgen {
 
     /// Transpilation mode.
     #[derive(Debug, PartialEq)]
+    #[repr(u8)]
     pub enum Mode {
         /// Ready for production.
         Release,
@@ -66,6 +67,7 @@ pub mod cgen {
 
     /// Language statements.
     #[derive(Debug)]
+    #[repr(u8)]
     pub enum Stmt {
         Global(Option<Vec<Self>>),
         Fn(Option<Fn>),

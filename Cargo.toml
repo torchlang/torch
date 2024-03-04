@@ -9,4 +9,5 @@ members = [
     "transpiler/torchc_script",
     "transpiler/torchc_hike",
     "transpiler/torchc_cgen",
+    "transpiler/torchc_cli",
 ]

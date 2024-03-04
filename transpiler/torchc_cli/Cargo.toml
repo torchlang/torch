@@ -1,0 +1,7 @@
+[package]
+name = "torchc_cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+torchc_lits = { path = "../torchc_lits" }

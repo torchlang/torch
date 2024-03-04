@@ -1,5 +1,6 @@
 use async_std::{fs, path::PathBuf};
 use torchc_cgen::{cgen, CGen};
+use torchc_cli::Cli;
 use torchc_diagnosis::panic;
 use torchc_hike::hike;
 use torchc_lits::lits;
@@ -9,6 +10,13 @@ use torchc_script::{AsScript, Script};
 #[async_std::main]
 async fn main() {
     panic::default();
+
+    let cli: Cli = Cli::parse();
+    println!(
+        "[cmd: `{}`, subcmd: `{:?}`]",
+        String::from_utf8_lossy(&cli.cmd.unwrap()),
+        cli.subcmd.unwrap()
+    );
 
     // Find the language files in the `src/` directory.
 

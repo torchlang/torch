@@ -7,6 +7,14 @@ pub mod lits {
     pub const DOT: &str = ".";
     pub const CURRENT: &str = "current";
 
+    /// Command-line interface literals.
+    pub mod cli {
+        pub const BUILD: &str = "build";
+        pub const RUN: &str = "run";
+        /// `help` aliases.
+        pub const MANUAL: &str = "manual";
+    }
+
     pub mod extensions {
         /// `file.t`
         pub const T: &str = "t";
