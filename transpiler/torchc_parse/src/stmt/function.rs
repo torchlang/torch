@@ -1,7 +1,7 @@
 use super::IllegalIndentAccordingTo;
 use crate::parser;
 use torchc_cgen::cgen;
-use torchc_diagnosis::Diagnosis;
+use torchc_diagnosis::panic;
 use torchc_lex::{Pos, Table};
 use torchc_lits::lits;
 use torchc_script::{
@@ -15,7 +15,7 @@ use torchc_script::{
 /// It recursively parses the function statement and obtains the _**cgen data**_.
 pub fn function(
     script: &mut Script,
-    diagnosis: &mut Diagnosis<'_>,
+    diagnosis: &mut panic::Diagnosis<'_>,
     stmt: &cgen::Stmt,
 ) -> cgen::Stmt {
     let mut fn_stmt: cgen::Fn = cgen::Fn::new();

@@ -1,8 +1,6 @@
 use async_std::{fs, path::PathBuf};
-use colored::Colorize;
-use std::panic;
 use torchc_cgen::{cgen, CGen};
-use torchc_diagnosis::Diagnosis;
+use torchc_diagnosis::panic;
 use torchc_hike::hike;
 use torchc_lits::lits;
 use torchc_parse::parser;
@@ -10,35 +8,7 @@ use torchc_script::{AsScript, Script};
 
 #[async_std::main]
 async fn main() {
-    // Configure the general error diagnoser by `panic!(...)`.
-    panic::set_hook(Box::new(|panic_info| {
-        if let Some(err) = panic_info.payload().downcast_ref::<&str>() {
-            return eprintln!(
-                "{}{} {}",
-                lits::EPREFIX.red().bold(),
-                lits::COLON.bold(),
-                err
-            );
-        }
-        if let Some(err) = panic_info.payload().downcast_ref::<String>() {
-            return eprintln!(
-                "{}{} {}",
-                lits::EPREFIX.red().bold(),
-                lits::COLON.bold(),
-                err
-            );
-        }
-
-        #[cfg(debug_assertions)]
-        eprintln!(
-            "{}{} the type in {}{}{} has no support",
-            lits::EPREFIX.red().bold(),
-            lits::COLON.bold(),
-            "panic_info.payload().downcast_ref::<".bold(),
-            "T".red().bold(),
-            ">()".bold()
-        );
-    }));
+    panic::default();
 
     // Find the language files in the `src/` directory.
 
@@ -70,7 +40,7 @@ async fn main() {
         let content: String = fs::read_to_string(&path).await.unwrap();
 
         let mut script: Script = content.as_script();
-        let mut diagnosis: Diagnosis = Diagnosis::new(&path, &cwd);
+        let mut diagnosis: panic::Diagnosis = panic::Diagnosis::new(&path, &cwd);
         let mut expr: cgen::Stmt = cgen::Stmt::Global(None);
         expr = parser(&mut script, &mut diagnosis, &expr);
 

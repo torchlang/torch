@@ -1,5 +1,5 @@
 use torchc_cgen::cgen;
-use torchc_diagnosis::Diagnosis;
+use torchc_diagnosis::panic;
 use torchc_lex::Table;
 use torchc_script::{
     iter::{Feature, Mode::Peek},
@@ -14,7 +14,7 @@ mod stmt;
 /// _**Syntactic Analyzer**_
 pub fn parser(
     script: &mut Script,
-    diagnosis: &mut Diagnosis<'_>,
+    diagnosis: &mut panic::Diagnosis<'_>,
     parent_stmt: &cgen::Stmt,
 ) -> cgen::Stmt {
     let mut globals: Vec<cgen::Stmt> = vec![];
@@ -25,9 +25,9 @@ pub fn parser(
     while let Some(token) = script.token(Peek(Feature::Code)) {
         // Function statement.
         if token.is(&Table::Fn) {
-            let fn_expr: cgen::Stmt = cgen::Stmt::Fn(None);
+            let fn_stmt: cgen::Stmt = cgen::Stmt::Fn(None);
             if let cgen::Stmt::Global(_) = parent_stmt {
-                globals.push(stmt::function(script, diagnosis, &fn_expr));
+                globals.push(stmt::function(script, diagnosis, &fn_stmt));
             }
 
             // Illegal token.
@@ -37,8 +37,7 @@ pub fn parser(
     }
 
     // Global scope.
-    let parent_expr = cgen::Stmt::Fn(None);
-    if let cgen::Stmt::Global(_) = parent_expr {
+    if let cgen::Stmt::Global(_) = parent_stmt {
         cgen::Stmt::Global(Some(globals))
     } else {
         cgen::Stmt::Global(None)
