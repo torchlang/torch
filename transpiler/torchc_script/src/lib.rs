@@ -75,7 +75,7 @@ impl AsScript for String {
             while let Some(token) = lexer(&mut script) {
                 tokens.push(token);
             }
-            // Replace `EOF` with `;`.
+            // Replace `EOF` with `\n` (automatic end of statement).
             if !tokens[tokens.len() - 1].is(&Table::EndOfStmt) {
                 let mut token: Token = Token::new();
                 token.pos = tokens[tokens.len() - 1].pos;

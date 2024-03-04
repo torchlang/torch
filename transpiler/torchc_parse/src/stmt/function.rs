@@ -69,9 +69,16 @@ pub fn function(
 
     // Recursive indentation.
     while let Some(token) = script.token(Peek(Feature::Code)) {
+        // Skip the automatic end of statements.
+        if token.is(&Table::EndOfStmt) {
+            script.token(Next(Feature::Code));
+            continue;
+        }
+
         if token.pos.grapheme <= indent {
             break;
         }
+        println!("({})", token.lit().unwrap());
 
         // Checks for valid statements within the function.
         if token.is(&Table::Fn) {
