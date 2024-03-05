@@ -2,6 +2,7 @@ use self::iter::{
     Feature,
     Mode::{Next, Peek},
 };
+use async_std::{fs, io, path::Path};
 use torchc_lex::{lexer, Table, ToScript, Token};
 
 pub mod iter {
@@ -61,38 +62,38 @@ impl Script {
         }
         None
     }
-}
 
-pub trait AsScript {
-    /// Interprets the script string as a token vector.
-    fn as_script(&self) -> Script;
-}
-impl AsScript for String {
-    fn as_script(&self) -> Script {
-        let mut script: Script = {
-            let mut script: torchc_lex::Script = self.to_script();
-            let mut tokens: Vec<Token> = vec![];
-            while let Some(token) = lexer(&mut script) {
-                tokens.push(token);
+    /// Interpret the script by tokens.
+    pub async fn script(path: &Path) -> io::Result<Script> {
+        Ok({
+            {
+                let contents: String = fs::read_to_string(path).await?;
+                let mut script: torchc_lex::Script = contents.to_script();
+                let mut tokens: Vec<Token> = vec![];
+                while let Some(token) = lexer(&mut script) {
+                    tokens.push(token);
+                }
+                // Replace `EOF` with `\n` (automatic end of statement).
+                if !tokens[tokens.len() - 1].is(&Table::EndOfStmt) {
+                    let mut token: Token = Token::new();
+                    token.pos = tokens[tokens.len() - 1].pos;
+                    token.pos.grapheme = script.pos.grapheme + 1;
+                    token.lexeme = Table::EndOfStmt;
+                    tokens.push(token);
+                }
+                Script { tokens, i: 0 }
             }
-            // Replace `EOF` with `\n` (automatic end of statement).
-            if !tokens[tokens.len() - 1].is(&Table::EndOfStmt) {
-                let mut token: Token = Token::new();
-                token.pos = tokens[tokens.len() - 1].pos;
-                token.pos.grapheme = script.pos.grapheme + 1;
-                token.lexeme = Table::EndOfStmt;
-                tokens.push(token);
-            }
-            Script { tokens, i: 0 }
-        };
-
-        // Retokenizer.
-
+            .retokenizer()
+        }
+        .filter())
+    }
+    /// Restructures the most complex tokens.
+    fn retokenizer(&mut self) -> Self {
         let mut tokens: Vec<Token> = vec![];
         let mut end_of_multiline_cmt_with_newline: bool = false;
         let mut end_of_stmt: Token = Token::new();
 
-        while let Some(token) = script.token(Next(Feature::Default)) {
+        while let Some(token) = self.token(Next(Feature::Default)) {
             let mut token: Token = token.clone();
 
             // Move the following tokens belonging to the comment content into `Cmt(_)`.
@@ -101,7 +102,7 @@ impl AsScript for String {
                 let indent: usize = token.pos.grapheme;
 
                 // Comment content.
-                while let Some(token) = script.token(Next(Feature::Default)) {
+                while let Some(token) = self.token(Next(Feature::Default)) {
                     // Merges all comment tokens, including newlines,
                     // this is for code formatting.
                     cmt.push(token.clone());
@@ -110,7 +111,7 @@ impl AsScript for String {
                         end_of_stmt = token.clone();
 
                         // Multiline commentary based on indentation.
-                        if let Some(token) = script.token(Peek(Feature::CodeAndCmts)) {
+                        if let Some(token) = self.token(Peek(Feature::CodeAndCmts)) {
                             if token.pos.grapheme > indent {
                                 continue;
                             }
@@ -130,6 +131,16 @@ impl AsScript for String {
                 tokens.push(end_of_stmt.clone());
                 end_of_multiline_cmt_with_newline = false;
             }
+        }
+
+        Script { tokens, i: 0 }
+    }
+    /// Filter consecutive special tokens.
+    fn filter(&mut self) -> Self {
+        let mut tokens: Vec<Token> = vec![];
+
+        while let Some(token) = self.token(Next(Feature::Default)) {
+            tokens.push(token.clone());
         }
 
         Script { tokens, i: 0 }

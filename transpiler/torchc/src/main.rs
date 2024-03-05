@@ -6,7 +6,7 @@ use torchc_diagnosis::panic;
 use torchc_hike::hike;
 use torchc_lits::lits;
 use torchc_parse::parser;
-use torchc_script::{AsScript, Script};
+use torchc_script::Script;
 
 #[async_std::main]
 async fn main() {
@@ -56,9 +56,7 @@ async fn main() {
         let mut path: PathBuf = src.clone();
         path.push("main.t");
 
-        let content: String = fs::read_to_string(&path).await.unwrap();
-
-        let mut script: Script = content.as_script();
+        let mut script: Script = Script::script(&path).await.unwrap();
         let mut diagnosis: panic::Diagnosis = panic::Diagnosis::new(&path, &cwd);
         let mut expr: cgen::Stmt = cgen::Stmt::Global(None);
         expr = parser(&mut script, &mut diagnosis, &expr);
